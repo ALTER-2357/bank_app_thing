@@ -1,0 +1,45 @@
+//
+//  Untitled.swift
+//  bank_app_thing
+//
+//  Created by lewis mills on 08/04/2025.
+//
+/*
+ 
+ 
+ made a huge amount of stuff done primenry the frontend.
+ 
+ ContentView_join_0-3
+ 
+ need to pass the data from pages to the last to send to the server.
+ 
+ ContentView_main
+ 
+i think it done (apart from some pizzazz (pazzazz?))
+ 
+ /////
+ 
+ ContentView_join,
+ ContentView_ping,
+ ContentView_trends,
+ ContentView_user_registration
+ 
+ 
+ not changed
+
+/////
+ 
+figam
+
+too many changes
+
+
+ 
+ tomorrow
+ 
+ 
+ 
+ frontend-backend intergration into one repo
+ 
+ 
+
