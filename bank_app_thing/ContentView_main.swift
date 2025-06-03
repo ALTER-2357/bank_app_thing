@@ -23,23 +23,25 @@
 
 
 import SwiftUI
+import SwiftData
+import CryptoKit
 
-struct ContentView_trends: View {
+struct ContentView_main: View {
     var body: some View {
         TabView {
-            Contentview_homepage()
+            ContentViewHomepage()
                 .tabItem {
                     Image(systemName: "house.fill")
                     Text("Home")
                 }
 
-            Contentview_pots()
+            contentView_join()
                 .tabItem {
                     Image(systemName: "banknote")
                     Text("pots")
                 }
 
-            ContentView_help()
+            UserDetailsView()
                 .tabItem {
                     Image(systemName: "gearshape.fill")
                     Text("help")
@@ -48,7 +50,11 @@ struct ContentView_trends: View {
     }
 }
 
+
+
 struct HomeView: View {
+    @Query private var storedUsers: [SwiftDataStore]
+
     var body: some View {
         VStack {
             Text("Home View")
@@ -57,20 +63,25 @@ struct HomeView: View {
         }
     }
 }
-
-struct SettingsView: View {
-    var body: some View {
-        VStack {
-            Text("Settings View")
-                .font(.largeTitle)
-                .padding()
+    
+    struct SettingsView: View {
+        var body: some View {
+            VStack {
+                Text("Settings View")
+                    .font(.largeTitle)
+                    .padding()
+            }
         }
     }
-}
 
 
-struct ContentView_trends_Previews: PreviewProvider {
+
+struct ContentView_main_Previews: PreviewProvider {
     static var previews: some View {
-        ContentView_trends()
+        ContentView_main()
+            .modelContainer(SwiftDataContainer.shared.container)
+
     }
 }
+
+

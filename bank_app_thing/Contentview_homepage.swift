@@ -7,19 +7,16 @@
 
 import SwiftUI
 import Combine
-
-
-
-
+import _SwiftData_SwiftUI
+import CryptoKit
 
 class Contentview_homepageModel: ObservableObject {
     @Published var cards: Cards?
     @Published var userDetails: UserDetails?
     @Published var ledgerEntries: [LedgerEntry] = []
     @Published var errorMessage: String?
-
-
-    func fetchLedgerEntries(pan: Int) {
+    
+    func fetchLedgerEntries(pan: String) {
         guard let url = URL(string :"http://localhost:3031/LedgerEntry?PAN=\(pan)") else {
             DispatchQueue.main.async {
                 self.errorMessage = "Invalid URL"
@@ -56,7 +53,8 @@ class Contentview_homepageModel: ObservableObject {
     }
     
     
-    func fetchCards(pan: Int) {
+    
+    func fetchCards(pan: String) {
         guard let url = URL(string: "http://localhost:3031/Cards?PAN=\(pan)") else {
             DispatchQueue.main.async {
                 self.errorMessage = "Invalid URL"
@@ -94,7 +92,7 @@ class Contentview_homepageModel: ObservableObject {
 
     
     
-    func fetchUserDetails(pan: Int) {
+    func fetchUserDetails(pan: String) {
         guard let url = URL(string: "http://localhost:3031/UserDetails?PAN=\(pan)") else {
             DispatchQueue.main.async {
                 self.errorMessage = "Invalid URL"
@@ -133,13 +131,26 @@ class Contentview_homepageModel: ObservableObject {
 
 // MARK: - View
 
-struct Contentview_homepage: View {
+struct ContentViewHomepage: View {
+    var pan: String = "10"
     @StateObject private var viewModel = Contentview_homepageModel()
-    @State private var pan = 10 // Example PAN
+    @Query private var storedUsers: [SwiftDataStore] // Fetch all SwiftDataStore entries
+    @State private var refreshID = UUID() // Dummy state to trigger view refresh
+    
     
     var body: some View {
         VStack {
             if let userDetails = viewModel.userDetails {
+                Spacer()
+                Text("welcome back: \(storedUsers.map { $0.firstName }.joined(separator: ", "))")
+                    .padding(6)
+                    .background(RoundedRectangle(cornerRadius: 6).fill(Color.gray.opacity(0.7)))
+                    .foregroundColor(.white)
+                    .onAppear() {
+                        viewModel.fetchUserDetails(pan: pan)
+                    }
+                Spacer()
+                
                 VStack {
                     HStack {
                         VStack(alignment: .leading, spacing: 8) {
@@ -198,14 +209,15 @@ struct Contentview_homepage: View {
         }
         .onAppear {
             viewModel.fetchLedgerEntries(pan: pan)
-            viewModel.fetchUserDetails(pan: pan)
-            viewModel.fetchCards(pan: pan)
+            viewModel.fetchUserDetails(pan:pan)
+            viewModel.fetchCards(pan:pan)
         }
     }
 }
 
-struct Contentview_homepage_Previews: PreviewProvider {
+struct ContentViewHomepage_Previews: PreviewProvider {
     static var previews: some View {
-        Contentview_homepage()
+        ContentViewHomepage()
+            .modelContainer(SwiftDataContainer.shared.container)
     }
 }

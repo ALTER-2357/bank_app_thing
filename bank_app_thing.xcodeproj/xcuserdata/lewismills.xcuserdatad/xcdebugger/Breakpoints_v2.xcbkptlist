@@ -42,8 +42,8 @@
             filePath = "bank_app_thing/ContentView_main.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "53"
-            endingLineNumber = "53"
+            startingLineNumber = "59"
+            endingLineNumber = "59"
             landmarkName = "body"
             landmarkType = "24">
          </BreakpointContent>
@@ -58,10 +58,40 @@
             filePath = "bank_app_thing/ContentView_main.swift"
             startingColumnNumber = "9223372036854775807"
             endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "52"
-            endingLineNumber = "52"
+            startingLineNumber = "58"
+            endingLineNumber = "58"
             landmarkName = "body"
             landmarkType = "24">
+            <Locations>
+               <Location
+                  uuid = "4391E14E-85CD-42FC-ACED-7E3764FCDFDC - d6b302e3aee364a2"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "bank_app_thing.HomeView.init() -&gt; bank_app_thing.HomeView"
+                  moduleName = "bank_app_thing.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///var/folders/0p/v3sc5_4j5vs6rymq2hmqkqrh0000gn/T/-7ec6c3.@__swiftmacro_14bank_app_thing8HomeViewV11storedUsers33_01FB77EC8A0F7CDAD7DC712DE0F4E715LL5QueryfMp_.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "1"
+                  endingLineNumber = "1">
+               </Location>
+               <Location
+                  uuid = "4391E14E-85CD-42FC-ACED-7E3764FCDFDC - 8a08294e0d5a38f4"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "bank_app_thing.HomeView.init(_storedUsers: _SwiftData_SwiftUI.Query&lt;bank_app_thing.SwiftDataStore, Swift.Array&lt;bank_app_thing.SwiftDataStore&gt;&gt;) -&gt; bank_app_thing.HomeView"
+                  moduleName = "bank_app_thing.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/lewismills/code/BANKING%20APP/bank_app_thing/bank_app_thing/ContentView_main.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "0"
+                  endingLineNumber = "0">
+               </Location>
+            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>
