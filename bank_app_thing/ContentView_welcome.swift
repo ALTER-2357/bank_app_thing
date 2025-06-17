@@ -62,7 +62,7 @@ struct ContentView_welcome: View {
                     }
 
                     NavigationLink {
-                        contentView_login()
+                        RootView()   // ContentViewHomepage()
                     } label: {
                         Text("login")
                             .font(.headline)

@@ -25,7 +25,7 @@ struct bank_app_thingApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView_main()
+            ContentView_welcome()
         }
         .modelContainer(sharedModelContainer)
     }

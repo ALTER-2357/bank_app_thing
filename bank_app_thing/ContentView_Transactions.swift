@@ -14,6 +14,7 @@ struct LedgerEntry: Codable, Identifiable {
     let Id: Int
     let PAN: String
     let MerchantID: String
+    let MerchantName: String
     let hash: String
     let TransactionID: String
     let Date: String
@@ -80,14 +81,18 @@ struct ContentView_Transactions: View {
             if !viewModel.ledgerEntries.isEmpty {
                 List(viewModel.ledgerEntries) { entry in
                     VStack(alignment: .leading, spacing: 6 ) {
-                        Text("TransactionID: \(entry.TransactionID)")
-                            .font(.headline)
+                        HStack{
+                            Text("MerchantName: \(entry.MerchantName)")
+                            Spacer()
+                            Text("Amount: £\(entry.Amount)")
+                                .font(.subheadline)
+                        }
+                        .font(.headline)
                         Text("Date: \(entry.Date)")
-                            .font(.subheadline)
-                        Text("Amount: \(entry.Amount)")
                             .font(.subheadline)
                         Text("Description: \(entry.Description)")
                             .font(.body)
+                   
                     }
                     .padding(.vertical, 4)
                 }
@@ -103,6 +108,8 @@ struct ContentView_Transactions: View {
         }
     }
 }
+
+
 
 struct ContentView_Transactions_Previews: PreviewProvider {
     static var previews: some View {

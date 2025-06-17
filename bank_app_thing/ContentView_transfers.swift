@@ -19,7 +19,7 @@ struct Payee: Identifiable, Codable {
 
 // MARK: - ViewModel
 
-class Contentview_pingModel: ObservableObject {
+class Contentview_transfersModel: ObservableObject {
     @Published var payees: [Payee] = []
     @Published var errorMessage: String?
 
@@ -62,23 +62,55 @@ class Contentview_pingModel: ObservableObject {
 
 // MARK: - View
 
-struct Contentview_ping: View {
-    @StateObject private var viewModel = Contentview_pingModel()
+struct Contentview_transfers: View {
+    @StateObject private var viewModel = Contentview_transfersModel()
     @State private var pan = 10 // Example PAN
 
     var body: some View {
         VStack {
+            ZStack {
+                Text("payees")
+                    .font(.title)
+                HStack {
+                    Spacer()
+                    Button(action: {
+                      
+                    }) {
+                        Image(systemName: "plus.circle.fill")
+                            .font(.largeTitle)
+                            .foregroundColor(.gray)
+                    }
+                    .padding()
+                }
+            }
             if !viewModel.payees.isEmpty {
                 List(viewModel.payees) { payee in
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("Payee Name: \(payee.payeeName)")
-                            .font(.headline)
-                        Text("Payees Pan: \(payee.payeesPan)")
-                            .font(.subheadline)
-                        Text("ShortCode: \(payee.shortCode)")
-                            .font(.subheadline)
-                    }
-                    .padding(.vertical, 4)
+                        Button(action: {
+                           
+                        }) {
+                            VStack(alignment: .leading, spacing: 6){
+                                Text("Payee Name: \(payee.payeeName)")
+                                    .font(.headline)
+                                    .foregroundColor(.black)
+                                HStack{ Text("Payees Pan: \(payee.payeesPan)")
+                                        .font(.subheadline)
+                                        .foregroundColor(.black)
+                                    Spacer()
+                                    Image(systemName: "chevron.right")
+                                        .font(.system(size: 30))
+                                        .foregroundColor(.black)
+                                }
+                                Text("ShortCode: \(payee.shortCode)")
+                                    .font(.subheadline)
+                                    .foregroundColor(.black)
+                            }
+                        }
+                        .padding(.vertical, 4)
+                        }
+
+                        
+                  
                 }
             } else if let errorMessage = viewModel.errorMessage {
                 Text("Error: \(errorMessage)")
@@ -93,8 +125,10 @@ struct Contentview_ping: View {
     }
 }
 
-struct Contentview_ping_Previews: PreviewProvider {
+struct Contentview_transfers_Previews: PreviewProvider {
     static var previews: some View {
-        Contentview_ping()
+        Contentview_transfers()
     }
 }
+
+

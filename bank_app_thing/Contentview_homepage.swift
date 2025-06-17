@@ -151,52 +151,59 @@ class Contentview_homepageModel: ObservableObject {
                 print(self.errorMessage ?? "Unknown SwiftData error")
             }
         }
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
     }
-
-
-    
-    
-
-
 
 // MARK: - Main HomePage View
 
+import SwiftUI
+import SwiftData
+
 struct ContentViewHomepage: View {
+    @ObservedObject var auth: AuthManager
     @StateObject private var viewModel = Contentview_homepageModel()
-    @Query private var storedUsers: [SwiftDataStore]
-    @State private var needsLogin = true
-    @State private var refreshID = UUID() // Used to force a "refresh"
-    
-    
-    var pan: String {
-        storedUsers.first?.pan ?? "10"
-    }
     
     var body: some View {
-        ZStack {
-            NavigationStack {
-                VStack {
+        NavigationStack {
+            HStack{
+                Button(action: {
+                    // Action can be added here if needed in the future
+                }) {
+                    Image(systemName: "line.3.horizontal")
+                        .foregroundColor(.gray)
+                        .font(.system(size: 25))
+                }
+                .padding(.leading, 15)
+                
+                Spacer()
+                
+                Button(action: {
+                    // Action can be added here if needed in the future
+                }) {
+                    Image(systemName: "gear")
+                        .foregroundColor(.gray)
+                        .font(.system(size: 25))
+                }
+                .padding(.trailing, 15)
+            }
+            .padding(.bottom, 10)
+            .padding(.top, 10)
+            Spacer()
+            
+            VStack {
+                if let pan = auth.pan, !pan.isEmpty {
+                    // User is authenticated and PAN is present
                     if let userDetails = viewModel.userDetails {
                         VStack {
                             HStack {
-                                VStack(alignment: .leading, spacing: 8) {
+                                VStack(alignment: .leading ) {
+                                    
                                     Text("Card Number: \(userDetails.CardNumber)")
                                         .font(.headline)
                                     if let cards = viewModel.cards {
-                                        Text("CVV: \(cards.CVV) Expiry Date:\(cards.ExpiryDate)")
+                                        Text("CVV: \(cards.CVV)  Expiry Date: \(cards.ExpiryDate)")
                                             .font(.subheadline)
                                     } else {
-                                        Text("Loading card info...")
+                                        Text("Loading card info…")
                                             .font(.subheadline)
                                             .foregroundColor(.gray)
                                     }
@@ -207,18 +214,89 @@ struct ContentViewHomepage: View {
                                         .foregroundColor(.white)
                                 }
                             }
+                           
                             .padding(12)
                             .background(RoundedRectangle(cornerRadius: 12).fill(Color.blue.opacity(0.2)))
-                            Text("payees should go here")
+                            Text("your favorite payees")
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .padding(.leading, 15 )
+                                .padding(.top, 6)
+                            
+                            HStack{
+                                
+                                Button(action: {
+                                    // Action can be added here if needed in the future
+                                }) {
+                                    Image("default_payee")
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(width: 64, height: 64) // Adjust size as needed
+                                        .clipShape(Circle())
+                                        .overlay(
+                                            Circle()
+                                                .stroke(Color.black, lineWidth: 3)
+                                        )
+                                }
+                                .padding(.leading, 15)
+                                .padding(2)
+                                Button(action: {
+                                    // Action can be added here if needed in the future
+                                }) {
+                                    Image("default_payee")
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(width: 64, height: 64) // Adjust size as needed
+                                        .clipShape(Circle())
+                                        .overlay(
+                                            Circle()
+                                                .stroke(Color.black, lineWidth: 3)
+                                        )
+                                }
+                                .padding(2)
+                                Button(action: {
+                                    // Action can be added here if needed in the future
+                                }) {
+                                    Image("default_payee")
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fit)
+                                        .frame(width: 64, height: 64) // Adjust size as needed
+                                        .clipShape(Circle())
+                                        .overlay(
+                                            Circle()
+                                                .stroke(Color.black, lineWidth: 3)
+                                        )
+                                }
+                                Button(action: {
+                                    // Action can be added here if needed in the future
+                                }) {
+                                    //
+                                    Image(systemName: "plus")
+                                        .font(.system(size: 30))
+                                        
+                                        
+                                        .frame(width: 64, height: 64) // Adjust size as needed
+                                        .foregroundColor(.black)
+                                        .clipShape(Circle())
+                                        .overlay(
+                                            Circle()
+                                                .stroke(Color.black, lineWidth: 3)
+                                        )
+                                }
+                                Spacer()
+                            }
+                            .padding(6)
                             VStack {
                                 if !viewModel.ledgerEntries.isEmpty {
                                     List(viewModel.ledgerEntries) { entry in
-                                        VStack(alignment: .leading, spacing: 6) {
-                                            Text("TransactionID: \(entry.TransactionID)")
-                                                .font(.headline)
+                                        VStack(alignment: .leading, spacing: 6 ) {
+                                            HStack{
+                                                Text("Merchants Name: \(entry.MerchantName)")
+                                                Spacer()
+                                                Text("Amount: £\(entry.Amount)")
+                                                    .font(.subheadline)
+                                            }
+                                            .font(.headline)
                                             Text("Date: \(entry.Date)")
-                                                .font(.subheadline)
-                                            Text("Amount: \(entry.Amount)")
                                                 .font(.subheadline)
                                             Text("Description: \(entry.Description)")
                                                 .font(.body)
@@ -229,7 +307,7 @@ struct ContentViewHomepage: View {
                                     Text("Error: \(errorMessage)")
                                         .foregroundColor(.red)
                                 } else {
-                                    Text("Loading...")
+                                    Text("Loading…")
                                 }
                             }
                         }
@@ -238,25 +316,25 @@ struct ContentViewHomepage: View {
                             .foregroundColor(.red)
                             .padding()
                     } else {
-                        Text("Loading data...")
+                        Text("Loading data…")
                             .padding()
                     }
+                } else {
+                    // This branch should rarely be hit, as the parent view should handle login!
+                    Text("No PAN found. Please login.")
+                        .foregroundColor(.red)
+                        .padding()
                 }
-                .onAppear {
-                    if !pan.isEmpty {
-                        viewModel.fetchLedgerEntries(pan: pan)
-                        viewModel.fetchUserDataStore(pan: pan)
-                        viewModel.fetchCards(pan: pan)
-                    }
+            }
+            .onAppear {
+                if let pan = auth.pan, !pan.isEmpty {
+                    viewModel.fetchLedgerEntries(pan: pan)
+                    viewModel.fetchUserDataStore(pan: pan)
+                    viewModel.fetchCards(pan: pan)
                 }
             }
         }
+        
     }
-}
-       
-struct ContentViewHomepage_Previews: PreviewProvider {
-    static var previews: some View {
-        ContentViewHomepage()
-            .modelContainer(SwiftDataContainer.shared.container)
-    }
+    
 }

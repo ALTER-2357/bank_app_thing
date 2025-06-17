@@ -79,6 +79,44 @@ class UserDetailsViewModel: ObservableObject {
         self.modelContext = modelContext
     }
 
+    func fetchUserDataStore(pan: String) {
+            guard let url = URL(string: "http://localhost:3031/UserDetails?PAN=\(pan)") else {
+                self.errorMessage = "Invalid URL"
+                return
+            }
+
+            URLSession.shared.dataTask(with: url) { data, response, error in
+                if let error = error {
+                    DispatchQueue.main.async {
+                        self.errorMessage = "Error: \(error.localizedDescription)"
+                    }
+                    return
+                }
+
+                guard let data = data else {
+                    DispatchQueue.main.async {
+                        self.errorMessage = "No data received"
+                    }
+                    return
+                }
+
+                do {
+                    let decodedData = try JSONDecoder().decode(UserDetails.self, from: data)
+                    DispatchQueue.main.async {
+                        self.userDetails = decodedData
+                        self.saveToSwiftDataStore(decodedData)
+                    }
+                } catch {
+                    DispatchQueue.main.async {
+                        self.errorMessage = "Decoding error: \(error.localizedDescription)"
+                    }
+                }
+            }.resume()
+        }
+    
+
+    
+    
     func fetchUserDetails(pan: String) {
         guard let url = URL(string: "http://localhost:3031/UserDetails?PAN=\(pan)") else {
             self.errorMessage = "Invalid URL"

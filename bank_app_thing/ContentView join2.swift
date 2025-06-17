@@ -13,27 +13,30 @@ struct ContentView_join2: View {
     @Binding var email: String
     @Binding var address: String
     @State var mobileNumber: String = ""
-
     @State private var isLoading = false
     @State private var showAlert = false
     @State private var alertMessage = ""
+    @State private var registrationSuccess = false  // Track registration status
+    @State private var navigateToLogin = false      // Trigger navigation
 
+    @MainActor
+    func refreshAll(pan: String) {
+        let userDetailsVM = UserDetailsViewModel()
+        userDetailsVM.fetchUserDataStore(pan: pan)
+        print("Refreshed!")
+    }
+
+    
     // Replace with your actual server URL
     let serverURL = "http://localhost:3031/UserDetails"
 
     var body: some View {
         NavigationStack {
             ZStack {
-                Color(.color1)
-                    .ignoresSafeArea()
-
+                Color(.color1).ignoresSafeArea()
                 ScrollView {
                     VStack(spacing: 20) {
-                        Spacer()
-                        Spacer()
-                        Spacer()
-                        Spacer()
-                        Spacer()
+                        Spacer(); Spacer(); Spacer(); Spacer(); Spacer()
                         Text("final step. 🎉 \nenter your mobile number.")
                             .font(.largeTitle)
                             .fontWeight(.bold)
@@ -65,20 +68,31 @@ struct ContentView_join2: View {
                         .padding(.horizontal)
                         .padding(.top, 20)
                         Spacer()
+                        // NavigationLink for programmatic navigation
+                        NavigationLink(
+                            destination: RootView(),
+                            isActive: $navigateToLogin
+                        ) {
+                            EmptyView()
+                        }
                     }
                     .padding()
                 }
             }
         }
         .alert("Registration Status", isPresented: $showAlert) {
-            Button("OK", role: .cancel) { }
+            Button("OK", role: .cancel) {
+                // Only navigate if registration was successful
+                if registrationSuccess {
+                    navigateToLogin = true
+                }
+            }
         } message: {
             Text(alertMessage)
         }
     }
 
     private func submitToServer() {
-        // 1. Verify all fields contain values
         print("Form values before submission:")
         print("First Name: \(firstName)")
         print("Last Name: \(lastName)")
@@ -86,16 +100,15 @@ struct ContentView_join2: View {
         print("Address: \(address)")
         print("Mobile Number: \(mobileNumber)")
 
-        // 2. Validate inputs
         guard !email.isEmpty, !firstName.isEmpty, !lastName.isEmpty, !address.isEmpty, !mobileNumber.isEmpty else {
             alertMessage = "Please fill in all required fields"
             showAlert = true
+            registrationSuccess = false
             return
         }
 
         isLoading = true
 
-        // 3. Create URLComponents to properly encode parameters
         var components = URLComponents()
         components.queryItems = [
             URLQueryItem(name: "FirstName", value: firstName),
@@ -109,6 +122,7 @@ struct ContentView_join2: View {
             alertMessage = "Invalid server URL"
             showAlert = true
             isLoading = false
+            registrationSuccess = false
             return
         }
 
@@ -124,6 +138,7 @@ struct ContentView_join2: View {
         let task = URLSession.shared.dataTask(with: request) { data, response, error in
             DispatchQueue.main.async {
                 isLoading = false
+                registrationSuccess = false
 
                 if let error = error {
                     alertMessage = "Network error: \(error.localizedDescription)"
@@ -142,9 +157,9 @@ struct ContentView_join2: View {
                 if let data = data {
                     let responseString = String(data: data, encoding: .utf8) ?? "No readable data"
                     print("Server response body: \(responseString)")
-                    UserDefaults.standard.set(responseString, forKey: "PAN")
-                    let username = UserDefaults.standard.string(forKey: "PAN")
-                    print("Server response body:", username!)
+
+                    let pan = responseString
+                    refreshAll(pan: pan)
 
                     if responseString.contains("invalid character") {
                         alertMessage = "Server couldn't understand our data format"
@@ -154,6 +169,7 @@ struct ContentView_join2: View {
                 switch httpResponse.statusCode {
                 case 200..<300:
                     alertMessage = "Registration successful!"
+                    registrationSuccess = true
                 case 400:
                     alertMessage = "Bad request (400) - please check your data"
                 default:
@@ -166,6 +182,4 @@ struct ContentView_join2: View {
         task.resume()
     }
 }
-
-
 /// after the account is made and got a pan back this code will store it and  move on to the homepage to get all the info
