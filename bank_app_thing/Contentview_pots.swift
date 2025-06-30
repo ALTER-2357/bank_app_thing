@@ -33,7 +33,7 @@ class Contentview_potsModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var successMessage: String?
 
-    func fetchPots(pan: Int) {
+    func fetchPots(pan: String) {
         guard let url = URL(string: "http://localhost:3031/Pots?PAN=\(pan)") else {
             DispatchQueue.main.async {
                 self.errorMessage = "Invalid URL"
@@ -80,7 +80,7 @@ class Contentview_potsModel: ObservableObject {
 
     /// Create a new Pot using POST with query parameters (not JSON body)
     func createPot(
-        pan: Int,
+        pan: String,
         name: String,
         style: String,
         amount: String,
@@ -142,7 +142,7 @@ class Contentview_potsModel: ObservableObject {
 
 struct Contentview_pots: View {
     @StateObject private var viewModel = Contentview_potsModel()
-    @State private var pan = 10 // Example PAN
+    @State private var pan: String = PanManager.pan ?? ""
 
     // For demo: fields to create a new pot
     @State private var newPotName = ""

@@ -1,8 +1,9 @@
 //
-// ContentView join1.swift
+//  ContentViewJoin2.swift
 //  War Card Game
 //
 //  Created by lewis mills on 25/03/2025.
+//  Refactored & styled by Copilot
 //
 
 import SwiftUI
@@ -12,84 +13,108 @@ struct ContentView_join2: View {
     @Binding var lastName: String
     @Binding var email: String
     @Binding var address: String
-    @State var mobileNumber: String = ""
+    @State private var mobileNumber: String = ""
     @State private var isLoading = false
     @State private var showAlert = false
     @State private var alertMessage = ""
-    @State private var registrationSuccess = false  // Track registration status
-    @State private var navigateToLogin = false      // Trigger navigation
+    @State private var registrationSuccess = false
+    @State private var navigateToHome = false
 
-    @MainActor
-    func refreshAll(pan: String) {
-        let userDetailsVM = UserDetailsViewModel()
-        userDetailsVM.fetchUserDataStore(pan: pan)
-        print("Refreshed!")
-    }
-
-    
     // Replace with your actual server URL
-    let serverURL = "http://localhost:3031/UserDetails"
+    private let serverURL = "http://localhost:3031/UserDetails"
 
     var body: some View {
         NavigationStack {
             ZStack {
-                Color(.color1).ignoresSafeArea()
+                Color(.color1)
+                    .ignoresSafeArea()
+                
                 ScrollView {
-                    VStack(spacing: 20) {
-                        Spacer(); Spacer(); Spacer(); Spacer(); Spacer()
-                        Text("final step. 🎉 \nenter your mobile number.")
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
-                            .foregroundColor(.color0)
-                            .padding(.top, 40)
-
-                        VStack(spacing: 15) {
-                            TextField("MobileNumber", text: $mobileNumber)
-                                .textFieldStyle(RoundedBorderTextFieldStyle())
-                                .autocapitalization(.words)
-                        }
-                        .padding(.horizontal)
-
-                        Button(action: submitToServer) {
-                            if isLoading {
-                                ProgressView()
-                                    .progressViewStyle(CircularProgressViewStyle(tint: .white))
-                            } else {
-                                Text("Register")
-                                    .font(.headline)
-                                    .foregroundColor(.white)
-                                    .frame(maxWidth: .infinity)
-                                    .frame(height: 50)
-                            }
-                        }
-                        .background(Color.color2)
-                        .cornerRadius(10)
-                        .disabled(isLoading)
-                        .padding(.horizontal)
-                        .padding(.top, 20)
-                        Spacer()
-                        // NavigationLink for programmatic navigation
-                        NavigationLink(
-                            destination: RootView(),
-                            isActive: $navigateToLogin
-                        ) {
-                            EmptyView()
-                        }
+                    VStack(spacing: 32) {
+                        Spacer().frame(height: 40)
+                        header
+                        mobileNumberField
+                        registerButton
+                        NavigationLink(destination: RootView(), isActive: $navigateToHome) { EmptyView() }
                     }
-                    .padding()
+                    .padding(.horizontal, 24)
+                    .padding(.vertical, 32)
                 }
             }
         }
         .alert("Registration Status", isPresented: $showAlert) {
             Button("OK", role: .cancel) {
-                // Only navigate if registration was successful
                 if registrationSuccess {
-                    navigateToLogin = true
+                    navigateToHome = true
                 }
             }
         } message: {
             Text(alertMessage)
         }
+    }
+
+    private var header: some View {
+        VStack(spacing: 12) {
+            Text("Final Step 🎉")
+                .font(.system(size: 34, weight: .bold, design: .rounded))
+                .foregroundColor(.color0)
+            Text("Enter your mobile number below to complete registration.")
+                .font(.title3)
+                .foregroundColor(.color0.opacity(0.7))
+        }
+        .multilineTextAlignment(.center)
+        .padding(.bottom, 20)
+    }
+
+    private var mobileNumberField: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Mobile Number")
+                .font(.headline)
+                .foregroundColor(.color0.opacity(0.8))
+            TextField("Enter mobile number", text: $mobileNumber)
+                .keyboardType(.numberPad)
+                .padding()
+                .background(
+                    RoundedRectangle(cornerRadius: 12)
+                        .fill(Color.white)
+                        .shadow(color: Color.black.opacity(0.05), radius: 2, x: 0, y: 2)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color.color2, lineWidth: 1)
+                )
+                .font(.system(size: 18, weight: .medium, design: .rounded))
+        }
+        .padding(.top, 10)
+    }
+
+    private var registerButton: some View {
+        Button(action: submitToServer) {
+            ZStack {
+                if isLoading {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                } else {
+                    Text("Register")
+                        .font(.headline)
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity, minHeight: 50)
+                }
+            }
+        }
+        .background(isLoading ? Color.color2.opacity(0.7) : Color.color2)
+        .animation(.easeInOut(duration: 0.2), value: isLoading)
+        .cornerRadius(12)
+        .disabled(isLoading)
+        .padding(.top, 24)
+        .shadow(color: Color.black.opacity(0.08), radius: 4, x: 0, y: 3)
+    }
+
+    @MainActor
+    private func refreshAll(pan: String) {
+        let userDetailsVM = UserDetailsViewModel()
+        userDetailsVM.fetchUserDataStore(pan: pan)
+        print("Refreshed!")
     }
 
     private func submitToServer() {
@@ -100,8 +125,12 @@ struct ContentView_join2: View {
         print("Address: \(address)")
         print("Mobile Number: \(mobileNumber)")
 
-        guard !email.isEmpty, !firstName.isEmpty, !lastName.isEmpty, !address.isEmpty, !mobileNumber.isEmpty else {
-            alertMessage = "Please fill in all required fields"
+        guard !email.isEmpty,
+              !firstName.isEmpty,
+              !lastName.isEmpty,
+              !address.isEmpty,
+              !mobileNumber.isEmpty else {
+            alertMessage = "Please fill in all required fields."
             showAlert = true
             registrationSuccess = false
             return
@@ -119,7 +148,7 @@ struct ContentView_join2: View {
         ]
 
         guard let url = URL(string: serverURL) else {
-            alertMessage = "Invalid server URL"
+            alertMessage = "Invalid server URL."
             showAlert = true
             isLoading = false
             registrationSuccess = false
@@ -147,7 +176,7 @@ struct ContentView_join2: View {
                 }
 
                 guard let httpResponse = response as? HTTPURLResponse else {
-                    alertMessage = "Invalid server response"
+                    alertMessage = "Invalid server response."
                     showAlert = true
                     return
                 }
@@ -162,7 +191,7 @@ struct ContentView_join2: View {
                     refreshAll(pan: pan)
 
                     if responseString.contains("invalid character") {
-                        alertMessage = "Server couldn't understand our data format"
+                        alertMessage = "Server couldn't understand our data format."
                     }
                 }
 
@@ -171,9 +200,9 @@ struct ContentView_join2: View {
                     alertMessage = "Registration successful!"
                     registrationSuccess = true
                 case 400:
-                    alertMessage = "Bad request (400) - please check your data"
+                    alertMessage = "Bad request (400) - please check your data."
                 default:
-                    alertMessage = "Server returned status code \(httpResponse.statusCode)"
+                    alertMessage = "Server returned status code \(httpResponse.statusCode)."
                 }
 
                 showAlert = true
@@ -183,3 +212,7 @@ struct ContentView_join2: View {
     }
 }
 /// after the account is made and got a pan back this code will store it and  move on to the homepage to get all the info
+
+
+
+

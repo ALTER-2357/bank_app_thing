@@ -1,5 +1,5 @@
 //
-//  Contentview_homepage.swift
+//  Contentview_transfers.swift
 //  bank_app_thing
 //
 //  Created by lewis mills on 27/05/2025.
@@ -23,7 +23,7 @@ class Contentview_transfersModel: ObservableObject {
     @Published var payees: [Payee] = []
     @Published var errorMessage: String?
 
-    func fetchPayees(pan: Int) {
+    func fetchPayees(pan: String) {
         guard let url = URL(string: "http://localhost:3031/Get_Payees?PAN=\(pan)") else {
             DispatchQueue.main.async {
                 self.errorMessage = "Invalid URL"
@@ -60,67 +60,121 @@ class Contentview_transfersModel: ObservableObject {
     }
 }
 
-// MARK: - View
+
+
+// MARK: - Main Transfers View
 
 struct Contentview_transfers: View {
     @StateObject private var viewModel = Contentview_transfersModel()
-    @State private var pan = 10 // Example PAN
+    @State private var pan: String = PanManager.pan ?? ""
+    @State private var selectedPayee: Payee? = nil
+    @State private var showReview = false
 
     var body: some View {
-        VStack {
-            ZStack {
-                Text("payees")
-                    .font(.title)
+        NavigationStack {
+            VStack(spacing: 0) {
+                // Top Bar
                 HStack {
+                    Text("transfers")
+                        .font(.largeTitle.bold())
+                        .foregroundColor(.primary)
                     Spacer()
                     Button(action: {
-                      
+                        // Action for adding payee (to be implemented)
                     }) {
                         Image(systemName: "plus.circle.fill")
-                            .font(.largeTitle)
-                            .foregroundColor(.gray)
+                            .font(.system(size: 32))
+                            .foregroundColor(.blue)
                     }
-                    .padding()
+                    .accessibilityLabel("Add payee")
                 }
-            }
-            if !viewModel.payees.isEmpty {
-                List(viewModel.payees) { payee in
-                    VStack(alignment: .leading, spacing: 6) {
-                        Button(action: {
-                           
-                        }) {
-                            VStack(alignment: .leading, spacing: 6){
-                                Text("Payee Name: \(payee.payeeName)")
-                                    .font(.headline)
-                                    .foregroundColor(.black)
-                                HStack{ Text("Payees Pan: \(payee.payeesPan)")
-                                        .font(.subheadline)
-                                        .foregroundColor(.black)
+                .padding(.horizontal)
+                .padding(.top, 20)
+                .padding(.bottom, 10)
+
+                // Payees List
+                if !viewModel.payees.isEmpty {
+                    List {
+                        ForEach(viewModel.payees) { payee in
+                            Button(action: {
+                                selectedPayee = payee
+                                showReview = true
+                            }) {
+                                HStack(alignment: .center, spacing: 12) {
+                                    // Icon or avatar placeholder
+                                    Circle()
+                                        .fill(Color.blue.opacity(0.15))
+                                        .frame(width: 48, height: 48)
+                                        .overlay(
+                                            Image("default_payee")
+                                                .resizable()
+                                                .aspectRatio(contentMode: .fill)
+                                                .frame(width: 48, height: 48)
+                                                .clipShape(Circle())
+                                                .overlay(
+                                                    Circle()
+                                                        .stroke(Color.gray, lineWidth: 3)
+                                                )
+                                                .background(
+                                                    Circle()
+                                                        .fill(Color(.systemBackground))
+                                                        .shadow(radius: 2)
+                                                )
+                                        )
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        Text(payee.payeeName)
+                                            .font(.headline)
+                                            .foregroundColor(.primary)
+                                        Text("Shortcode: \(payee.shortCode)")
+                                            .font(.caption)
+                                            .foregroundColor(.secondary)
+                                        Text("PAN: \(payee.payeesPan)")
+                                            .font(.caption2)
+                                            .foregroundColor(.gray)
+                                    }
                                     Spacer()
                                     Image(systemName: "chevron.right")
-                                        .font(.system(size: 30))
-                                        .foregroundColor(.black)
+                                        .foregroundColor(.gray)
+                                        .font(.system(size: 20, weight: .semibold))
                                 }
-                                Text("ShortCode: \(payee.shortCode)")
-                                    .font(.subheadline)
-                                    .foregroundColor(.black)
+                                .padding(8)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(Color(.systemGray6))
+                                )
                             }
+                            .buttonStyle(PlainButtonStyle())
                         }
-                        .padding(.vertical, 4)
-                        }
-
-                        
-                  
+                    }
+                    .listStyle(.plain)
+                } else if let errorMessage = viewModel.errorMessage {
+                    VStack {
+                        Spacer()
+                        Text("Error: \(errorMessage)")
+                            .foregroundColor(.red)
+                            .font(.body.bold())
+                        Spacer()
+                    }
+                } else {
+                    VStack(spacing: 16) {
+                        Spacer()
+                        ProgressView()
+                            .progressViewStyle(CircularProgressViewStyle())
+                        Text("Loading payees...")
+                            .foregroundColor(.gray)
+                        Spacer()
+                    }
                 }
-            } else if let errorMessage = viewModel.errorMessage {
-                Text("Error: \(errorMessage)")
-                    .foregroundColor(.red)
-            } else {
-                Text("Loading...")
             }
-        }
-        .onAppear {
-            viewModel.fetchPayees(pan: pan)
+            .background(Color(.systemGroupedBackground).ignoresSafeArea())
+            .onAppear {
+                viewModel.fetchPayees(pan: pan)
+            }
+            .sheet(isPresented: $showReview) {
+                if let payee = selectedPayee {
+                    TransferReviewView(payee: payee, isPresented: $showReview)
+                }
+            }
         }
     }
 }
@@ -130,5 +184,3 @@ struct Contentview_transfers_Previews: PreviewProvider {
         Contentview_transfers()
     }
 }
-
-
