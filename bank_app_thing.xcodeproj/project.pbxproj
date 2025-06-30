@@ -29,33 +29,9 @@
 		FDBE30542D478BF6000BB40E /* bank_app_thingUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = bank_app_thingUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
-/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		FD0E358A2DA571E2008B40BB /* Exceptions for "bank_app_thing" folder in "bank_app_thing" target */ = {
-			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
-			membershipExceptions = (
-				TODO.txt,
-			);
-			target = FDBE30362D478BF5000BB40E /* bank_app_thing */;
-		};
-/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
-
-/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
-		FD0E358B2DA571E2008B40BB /* Exceptions for "bank_app_thing" folder in "Compile Sources" phase from "bank_app_thing" target */ = {
-			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
-			buildPhase = FDBE30332D478BF5000BB40E /* Sources */;
-			membershipExceptions = (
-				TODO.txt,
-			);
-		};
-/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
-
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		FDBE30392D478BF5000BB40E /* bank_app_thing */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			exceptions = (
-				FD0E358A2DA571E2008B40BB /* Exceptions for "bank_app_thing" folder in "bank_app_thing" target */,
-				FD0E358B2DA571E2008B40BB /* Exceptions for "bank_app_thing" folder in "Compile Sources" phase from "bank_app_thing" target */,
-			);
 			path = bank_app_thing;
 			sourceTree = "<group>";
 		};
