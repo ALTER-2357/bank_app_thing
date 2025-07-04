@@ -19,6 +19,7 @@ struct ContentView_join2: View {
     @State private var alertMessage = ""
     @State private var registrationSuccess = false
     @State private var navigateToHome = false
+    @StateObject private var authManager = AuthManager()
 
     // Replace with your actual server URL
     private let serverURL = "http://localhost:3031/UserDetails"
@@ -35,7 +36,7 @@ struct ContentView_join2: View {
                         header
                         mobileNumberField
                         registerButton
-                        NavigationLink(destination: RootView(), isActive: $navigateToHome) { EmptyView() }
+                        NavigationLink(destination: RootView(auth: authManager), isActive: $navigateToHome) { EmptyView() }
                     }
                     .padding(.horizontal, 24)
                     .padding(.vertical, 32)
@@ -199,6 +200,10 @@ struct ContentView_join2: View {
                 case 200..<300:
                     alertMessage = "Registration successful!"
                     registrationSuccess = true
+                    // Force refresh AuthManager state after successful registration
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
+                        authManager.fetchPan()
+                    }
                 case 400:
                     alertMessage = "Bad request (400) - please check your data."
                 default:

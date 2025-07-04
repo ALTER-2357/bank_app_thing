@@ -10,7 +10,7 @@ import SwiftUI
 import SwiftData
 
 struct RootView: View {
-    @StateObject var auth = AuthManager()
+    @ObservedObject var auth: AuthManager
     @State private var showOverdraft = false
 
     var body: some View {

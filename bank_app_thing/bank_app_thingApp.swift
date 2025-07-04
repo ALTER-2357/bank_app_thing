@@ -10,6 +10,8 @@ import SwiftData
 
 @main
 struct bank_app_thingApp: App {
+    @StateObject private var authManager = AuthManager()
+    
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Item.self,
@@ -25,10 +27,10 @@ struct bank_app_thingApp: App {
 
     var body: some Scene {
         WindowGroup {
-            if let pan = PanManager.pan, !pan.isEmpty {
-                RootView() // <-- Show homepage if PAN exists
+            if authManager.isAuthenticated {
+                RootView(auth: authManager) // <-- Show homepage if authenticated
             } else {
-                ContentView_welcome()  // <-- Show welcome if PAN is missing
+                ContentView_welcome(authManager: authManager)  // <-- Show welcome if not authenticated
             }
         }
         .modelContainer(sharedModelContainer)
