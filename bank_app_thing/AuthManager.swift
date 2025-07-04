@@ -58,11 +58,17 @@ class AuthManager: ObservableObject {
 
             // Keep UserDefaults up-to-date with SwiftData
             savePanToUserDefaults(currentPan)
+            
+            // Keep PanManager in sync for app navigation
+            PanManager.pan = currentPan
         } catch {
             // If error, fall back to UserDefaults
             let storedPan = loadPanFromUserDefaults()
             pan = storedPan
             isAuthenticated = !(storedPan?.isEmpty ?? true)
+            
+            // Keep PanManager in sync for app navigation
+            PanManager.pan = storedPan
         }
     }
 
@@ -82,6 +88,9 @@ class AuthManager: ObservableObject {
         pan = nil
         isAuthenticated = false
         savePanToUserDefaults(nil)
+        
+        // Also clear PanManager for app navigation
+        PanManager.pan = nil
     }
 
     // MARK: - Global (static) PAN access
