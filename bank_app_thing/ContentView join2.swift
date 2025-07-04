@@ -8,6 +8,7 @@
 import SwiftUI
 
 struct ContentView_join2: View {
+    @EnvironmentObject var authManager: AuthManager
     @Binding var firstName: String
     @Binding var lastName: String
     @Binding var email: String
@@ -142,9 +143,10 @@ struct ContentView_join2: View {
                 if let data = data {
                     let responseString = String(data: data, encoding: .utf8) ?? "No readable data"
                     print("Server response body: \(responseString)")
-                    UserDefaults.standard.set(responseString, forKey: "PAN")
-                    let username = UserDefaults.standard.string(forKey: "PAN")
-                    print("Server response body:", username!)
+                    
+                    // Use AuthManager to handle login instead of directly setting UserDefaults
+                    authManager.login(pan: responseString)
+                    print("User logged in with PAN:", responseString)
 
                     if responseString.contains("invalid character") {
                         alertMessage = "Server couldn't understand our data format"

@@ -27,24 +27,29 @@ import SwiftData
 import CryptoKit
 
 struct ContentView_main: View {
+    @EnvironmentObject var authManager: AuthManager
+    
     var body: some View {
         TabView {
             ContentViewHomepage()
+                .environmentObject(authManager)
                 .tabItem {
                     Image(systemName: "house.fill")
                     Text("Home")
                 }
 
             contentView_join()
+                .environmentObject(authManager)
                 .tabItem {
                     Image(systemName: "banknote")
                     Text("pots")
                 }
 
             UserDetailsView()
+                .environmentObject(authManager)
                 .tabItem {
                     Image(systemName: "gearshape.fill")
-                    Text("help")
+                    Text("Settings")
                 }
         }
     }

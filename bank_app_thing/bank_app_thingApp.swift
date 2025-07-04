@@ -10,6 +10,8 @@ import SwiftData
 
 @main
 struct bank_app_thingApp: App {
+    @StateObject private var authManager = AuthManager()
+    
     var sharedModelContainer: ModelContainer = {
         let schema = Schema([
             Item.self,
@@ -25,7 +27,13 @@ struct bank_app_thingApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView_main()
+            if authManager.isLoggedIn {
+                ContentView_main()
+                    .environmentObject(authManager)
+            } else {
+                ContentView_welcome()
+                    .environmentObject(authManager)
+            }
         }
         .modelContainer(sharedModelContainer)
     }

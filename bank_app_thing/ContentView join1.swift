@@ -59,6 +59,7 @@ struct ContentView_join1: View {
                                 .autocapitalization(.words)
                             
                             NavigationLink(destination: ContentView_join2(firstName: $firstName, lastName: $lastName, email: $Email , address: $Address)
+                                .environmentObject(AuthManager.shared)
                                   ) {
                                       Text("Next")
                                   }

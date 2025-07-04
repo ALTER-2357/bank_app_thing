@@ -194,6 +194,7 @@ class SwiftDataContainer {
 }
 
 struct UserDetailsView: View {
+    @EnvironmentObject var authManager: AuthManager
     @StateObject private var viewModel: UserDetailsViewModel
     @State private var pan = ""
     @State private var showOnlyPermanent = false
@@ -294,6 +295,26 @@ struct UserDetailsView: View {
                 }
                 .frame(height: 300)
             }
+            
+            Divider().padding(.vertical, 20)
+            
+            // Logout Button
+            Button(action: {
+                // Optionally clear all user data from SwiftData
+                authManager.clearAllUserData(modelContext: viewModel.modelContext)
+                // Logout user
+                authManager.logout()
+            }) {
+                Text("Logout")
+                    .font(.headline)
+                    .padding()
+                    .background(Color.red)
+                    .foregroundColor(.white)
+                    .cornerRadius(10)
+                    .frame(maxWidth: .infinity)
+            }
+            .padding(.horizontal)
+            .padding(.bottom, 20)
         }
     }
 }

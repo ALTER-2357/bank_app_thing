@@ -9,6 +9,7 @@
 import SwiftUI
 
 struct ContentView_welcome: View {
+    @EnvironmentObject var authManager: AuthManager
     @State private var Email: String = ""
     @State private var firstName: String = ""
     @State private var lastName: String = ""
@@ -46,7 +47,8 @@ struct ContentView_welcome: View {
                     Spacer()
                     Spacer()
                     NavigationLink {
-                        ContentView_join0() // ContentView_join0()
+                        ContentView_join0()
+                            .environmentObject(authManager)
                     } label: {
                         Text("join")
                             .font(.headline)
@@ -63,6 +65,7 @@ struct ContentView_welcome: View {
 
                     NavigationLink {
                         contentView_login()
+                            .environmentObject(authManager)
                     } label: {
                         Text("login")
                             .font(.headline)

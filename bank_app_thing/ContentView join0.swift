@@ -56,6 +56,7 @@ struct ContentView_join0: View {
                         .padding(.horizontal)
                      
                         NavigationLink(destination: ContentView_join1(firstName: $firstName, lastName: $lastName)
+                            .environmentObject(AuthManager.shared)
                               ) {
                                   Text("Next")
                               }

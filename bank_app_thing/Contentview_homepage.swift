@@ -132,10 +132,14 @@ class Contentview_homepageModel: ObservableObject {
 // MARK: - View
 
 struct ContentViewHomepage: View {
-    var pan: String = "10"
+    @EnvironmentObject var authManager: AuthManager
     @StateObject private var viewModel = Contentview_homepageModel()
     @Query private var storedUsers: [SwiftDataStore] // Fetch all SwiftDataStore entries
     @State private var refreshID = UUID() // Dummy state to trigger view refresh
+    
+    private var currentPAN: String {
+        return authManager.getCurrentUserPAN() ?? "10" // fallback to "10" if no PAN
+    }
     
     
     var body: some View {
@@ -147,7 +151,7 @@ struct ContentViewHomepage: View {
                     .background(RoundedRectangle(cornerRadius: 6).fill(Color.gray.opacity(0.7)))
                     .foregroundColor(.white)
                     .onAppear() {
-                        viewModel.fetchUserDetails(pan: pan)
+                        viewModel.fetchUserDetails(pan: currentPAN)
                     }
                 Spacer()
                 
@@ -208,9 +212,9 @@ struct ContentViewHomepage: View {
             }
         }
         .onAppear {
-            viewModel.fetchLedgerEntries(pan: pan)
-            viewModel.fetchUserDetails(pan:pan)
-            viewModel.fetchCards(pan:pan)
+            viewModel.fetchLedgerEntries(pan: currentPAN)
+            viewModel.fetchUserDetails(pan: currentPAN)
+            viewModel.fetchCards(pan: currentPAN)
         }
     }
 }
