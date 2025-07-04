@@ -67,7 +67,6 @@ class LoginViewModel: ObservableObject {
                 email: userDetails.Email,
                 firstName: userDetails.FirstName,
                 lastName: userDetails.LastName,
-                ledgerEntry: userDetails.LedgerEntry,
                 overdraftTotal: userDetails.Overdraft_total,
                 pan: userDetails.PAN
             )

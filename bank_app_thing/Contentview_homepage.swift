@@ -67,15 +67,17 @@ class Contentview_homepageModel: ObservableObject {
     }
 
     func fetchUserDataStore(pan: String) {
-        guard let url = URL(string: "http://localhost:3031/UserDetails?PAN=\(pan)") else {
-            self.errorMessage = "Invalid URL"
-            print("Invalid URL")
+        guard let encodedPan = pan.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+              let url = URL(string: "http://localhost:3031/UserDetails?PAN=\(encodedPan)") else {
+            Task { @MainActor in
+                self.errorMessage = "Invalid URL"
+                print("Invalid URL")
+            }
             return
         }
         print("Fetching from URL: \(url.absoluteString)")
 
         URLSession.shared.dataTask(with: url) { data, response, error in
-            print("Network response received")
             if let error = error {
                 Task { @MainActor in
                     self.errorMessage = "Error: \(error.localizedDescription)"
@@ -110,7 +112,6 @@ class Contentview_homepageModel: ObservableObject {
             }
         }.resume()
     }
-
     func saveToSwiftDataStore(_ userDetails: UserDetails) {
         print("Saving user to SwiftDataStore: \(userDetails.PAN)")
         let fetchAllDescriptor = FetchDescriptor<SwiftDataStore>()
@@ -125,7 +126,6 @@ class Contentview_homepageModel: ObservableObject {
                 email: userDetails.Email,
                 firstName: userDetails.FirstName,
                 lastName: userDetails.LastName,
-                ledgerEntry: userDetails.LedgerEntry,
                 overdraftTotal: userDetails.Overdraft_total,
                 pan: userDetails.PAN
             )

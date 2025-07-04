@@ -11,6 +11,8 @@ import SwiftUI
 
 struct ContentView_Detailed_Transaction: View {
     let entry: LedgerEntry
+    @State private var isRefunding: Bool = false
+    @State private var refundResult: String?
 
     var body: some View {
         ScrollView {
@@ -70,6 +72,38 @@ struct ContentView_Detailed_Transaction: View {
                     }
                 }
 
+                Divider()
+                
+                // Refund Button
+                if entry.Amount.contains("-") == false && entry.Description.lowercased().contains("refund") == false {
+                    Button(action: {
+                        refundTransaction()
+                    }) {
+                        HStack {
+                            if isRefunding {
+                                ProgressView()
+                                    .progressViewStyle(CircularProgressViewStyle())
+                            }
+                            Text("Refund")
+                                .bold()
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.red)
+                        .foregroundColor(.white)
+                        .cornerRadius(10)
+                    }
+                    .disabled(isRefunding)
+                }
+                
+                // Refund Result feedback
+                if let refundResult = refundResult {
+                    Text(refundResult)
+                        .font(.callout)
+                        .foregroundColor(refundResult.lowercased().contains("success") ? .green : .red)
+                        .padding(.top, 4)
+                }
+
                 Spacer()
             }
             .padding()
@@ -77,7 +111,53 @@ struct ContentView_Detailed_Transaction: View {
         .navigationTitle("Transaction Details")
         .navigationBarTitleDisplayMode(.inline)
     }
+    
+    // MARK: - Refund Handler
+    private func refundTransaction() {
+        self.isRefunding = true
+        self.refundResult = nil
+        // Construct URL and make network request to refund endpoint
+        guard let url = URL(string: "http://localhost:3031/PaymentGateway/Refund") else {
+            self.refundResult = "Invalid refund URL."
+            self.isRefunding = false
+            return
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        let params = [
+            "TransactionID": entry.TransactionID,
+            "MerchantID": entry.MerchantID,
+            "Amount": entry.Amount.replacingOccurrences(of: "£", with: "") // Remove currency symbol if present
+        ]
+        request.httpBody = params
+            .map { "\($0.key)=\($0.value)" }
+            .joined(separator: "&")
+            .data(using: .utf8)
+        request.setValue("application/x-www-form-urlencoded", forHTTPHeaderField: "Content-Type")
+
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            DispatchQueue.main.async {
+                self.isRefunding = false
+                if let error = error {
+                    self.refundResult = "Refund failed: \(error.localizedDescription)"
+                    return
+                }
+                guard let data = data else {
+                    self.refundResult = "No response from server."
+                    return
+                }
+                let serverResponse = String(data: data, encoding: .utf8) ?? "Unknown response"
+                if serverResponse.lowercased().contains("completed") || serverResponse.lowercased().contains("success") {
+                    self.refundResult = "Refund successful!"
+                } else {
+                    self.refundResult = "Refund failed: \(serverResponse)"
+                }
+            }
+        }.resume()
+    }
 }
+
+
 
 struct DetailRow: View {
     let label: String
@@ -118,4 +198,3 @@ struct BalanceCard: View {
         .shadow(color: Color(.systemGray4), radius: 2, x: 0, y: 1)
     }
 }
-
