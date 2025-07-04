@@ -1,19 +1,13 @@
-//
-//  ContentView_Transactions.swift
-//  bank_app_thing
-//
-//  Created by lewis mills on 30/05/2025.
-//
-
+// using this code and you make a view that allows a user to review and enter a amount
 import SwiftUI
 import Combine
 
 // MARK: - Model
 struct LedgerEntry: Codable, Identifiable {
-    // These names must exactly match the JSON keys (case-sensitive)
     let Id: Int
     let PAN: String
     let MerchantID: String
+    let MerchantName: String
     let hash: String
     let TransactionID: String
     let Date: String
@@ -23,7 +17,7 @@ struct LedgerEntry: Codable, Identifiable {
     let SpendToday: String
     let OverdraftLeft: String
 
-    var id: Int { Id } // For Identifiable conformance
+    var id: Int { Id }
 }
 
 // MARK: - ViewModel
@@ -32,7 +26,7 @@ class ContentView_TransactionsModel: ObservableObject {
     @Published var ledgerEntries: [LedgerEntry] = []
     @Published var errorMessage: String?
 
-    func fetchLedgerEntries(pan: Int) {
+    func fetchLedgerEntries(pan: String) {
         guard let url = URL(string: "http://localhost:3031/LedgerEntry?PAN=\(pan)") else {
             DispatchQueue.main.async {
                 self.errorMessage = "Invalid URL"
@@ -58,7 +52,7 @@ class ContentView_TransactionsModel: ObservableObject {
             do {
                 let decodedData = try JSONDecoder().decode([LedgerEntry].self, from: data)
                 DispatchQueue.main.async {
-                    self.ledgerEntries = Array(decodedData.prefix(5))
+                    self.ledgerEntries = Array(decodedData.prefix(100000))
                 }
             } catch {
                 DispatchQueue.main.async {
@@ -73,39 +67,99 @@ class ContentView_TransactionsModel: ObservableObject {
 
 struct ContentView_Transactions: View {
     @StateObject private var viewModel = ContentView_TransactionsModel()
-    @State private var pan = 10 // Example PAN
+    @State private var pan: String = PanManager.pan ?? ""
+    
+    
 
     var body: some View {
-        VStack {
-            if !viewModel.ledgerEntries.isEmpty {
-                List(viewModel.ledgerEntries) { entry in
-                    VStack(alignment: .leading, spacing: 6 ) {
-                        Text("TransactionID: \(entry.TransactionID)")
-                            .font(.headline)
-                        Text("Date: \(entry.Date)")
-                            .font(.subheadline)
-                        Text("Amount: \(entry.Amount)")
-                            .font(.subheadline)
-                        Text("Description: \(entry.Description)")
-                            .font(.body)
+        NavigationView {
+            VStack(alignment: .leading, spacing: 0) {
+                Text("Transactions")
+                    .font(.largeTitle).bold()
+                    .padding([.top, .horizontal])
+                
+                if !viewModel.ledgerEntries.isEmpty {
+                    List {
+                        ForEach(viewModel.ledgerEntries) { entry in
+                            NavigationLink(destination: ContentView_Detailed_Transaction(entry: entry)) {
+                                TransactionListRow(entry: entry)
+                            }
+                            .listRowBackground(Color(.systemBackground))
+                        }
                     }
-                    .padding(.vertical, 4)
+                    .listStyle(PlainListStyle())
+                    .refreshable {
+                        viewModel.fetchLedgerEntries(pan: pan)
+                    }
+                } else if let errorMessage = viewModel.errorMessage {
+                    Spacer()
+                    Text("Error: \(errorMessage)")
+                        .foregroundColor(.red)
+                        .padding()
+                    Spacer()
+                } else {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        ProgressView("Loading...")
+                            .progressViewStyle(CircularProgressViewStyle())
+                        Spacer()
+                    }
+                    Spacer()
                 }
-            } else if let errorMessage = viewModel.errorMessage {
-                Text("Error: \(errorMessage)")
-                    .foregroundColor(.red)
-            } else {
-                Text("Loading...")
             }
-        }
-        .onAppear {
-            viewModel.fetchLedgerEntries(pan: pan)
+            .background(Color(.systemGroupedBackground).ignoresSafeArea())
+            .onAppear {
+                viewModel.fetchLedgerEntries(pan: pan)
+            }
         }
     }
 }
 
-struct ContentView_Transactions_Previews: PreviewProvider {
-    static var previews: some View {
-        ContentView_Transactions()
+// MARK: - Transaction Row Styling
+
+struct TransactionListRow: View {
+    let entry: LedgerEntry
+
+    var amountColor: Color {
+        entry.Amount.contains("-") ? .red : .green
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack(alignment: .center) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text(entry.MerchantName)
+                        .font(.headline)
+                        .foregroundColor(.primary)
+                    Text(entry.Date)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                Spacer()
+                Text("£\(entry.Amount)")
+                    .font(.title3).bold()
+                    .foregroundColor(amountColor)
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 2)
+                    .background(
+                        Capsule()
+                            .fill(amountColor.opacity(0.1))
+                    )
+            }
+            if !entry.Description.isEmpty {
+                Text(entry.Description)
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .lineLimit(2)
+            }
+        }
+        .padding(.vertical, 8)
+        .padding(.horizontal, 4)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.systemGray6))
+        )
+        .shadow(color: Color(.systemGray5), radius: 2, x: 0, y: 1)
     }
 }

@@ -1,223 +1,423 @@
-//
-//  Contentview_homepage.swift
-//  bank_app_thing
-//
-//  Created by lewis mills on 27/05/2025.
-//
-
 import SwiftUI
 import Combine
-import _SwiftData_SwiftUI
-import CryptoKit
+import SwiftData
 
 class Contentview_homepageModel: ObservableObject {
+    @Published var isAuthenticated: Bool = false
     @Published var cards: Cards?
     @Published var userDetails: UserDetails?
     @Published var ledgerEntries: [LedgerEntry] = []
     @Published var errorMessage: String?
-    
+    let modelContext: ModelContext
+
+    init(modelContext: ModelContext = ModelContext(SwiftDataContainer.shared.container)) {
+        self.modelContext = modelContext
+    }
+
     func fetchLedgerEntries(pan: String) {
-        guard let url = URL(string :"http://localhost:3031/LedgerEntry?PAN=\(pan)") else {
-            DispatchQueue.main.async {
-                self.errorMessage = "Invalid URL"
-            }
+        guard !pan.isEmpty else { return }
+        guard let url = URL(string: "http://localhost:3031/LedgerEntry?PAN=\(pan)") else {
+            DispatchQueue.main.async { self.errorMessage = "Invalid URL" }
             return
         }
-        
-        URLSession.shared.dataTask(with: url) { data, response, error in
+        URLSession.shared.dataTask(with: url) { data, _, error in
             if let error = error {
-                DispatchQueue.main.async {
-                    self.errorMessage = "Error: \(error.localizedDescription)"
-                }
+                DispatchQueue.main.async { self.errorMessage = "Error: \(error.localizedDescription)" }
                 return
             }
-
             guard let data = data else {
-                DispatchQueue.main.async {
-                    self.errorMessage = "No data received"
-                }
+                DispatchQueue.main.async { self.errorMessage = "No data received" }
                 return
             }
-
             do {
                 let decodedData = try JSONDecoder().decode([LedgerEntry].self, from: data)
                 DispatchQueue.main.async {
-                    self.ledgerEntries = Array(decodedData.prefix(5))
+                    self.ledgerEntries = Array(decodedData.prefix(1000))
                 }
             } catch {
-                DispatchQueue.main.async {
-                    self.errorMessage = "Decoding error: \(error.localizedDescription)"
-                }
+                DispatchQueue.main.async { self.errorMessage = "Decoding error: \(error.localizedDescription)" }
             }
         }.resume()
     }
-    
-    
-    
+
     func fetchCards(pan: String) {
+        guard !pan.isEmpty else { return }
         guard let url = URL(string: "http://localhost:3031/Cards?PAN=\(pan)") else {
-            DispatchQueue.main.async {
-                self.errorMessage = "Invalid URL"
-            }
+            DispatchQueue.main.async { self.errorMessage = "Invalid URL" }
             return
         }
-        
-        URLSession.shared.dataTask(with: url) { data, response, error in
+        URLSession.shared.dataTask(with: url) { data, _, error in
             if let error = error {
-                DispatchQueue.main.async {
-                    self.errorMessage = "Error: \(error.localizedDescription)"
-                }
+                DispatchQueue.main.async { self.errorMessage = "Error: \(error.localizedDescription)" }
                 return
             }
-
             guard let data = data else {
-                DispatchQueue.main.async {
-                    self.errorMessage = "No data received"
-                }
+                DispatchQueue.main.async { self.errorMessage = "No data received" }
                 return
             }
-
             do {
                 let decodedData = try JSONDecoder().decode(Cards.self, from: data)
                 DispatchQueue.main.async {
                     self.cards = decodedData
                 }
             } catch {
-                DispatchQueue.main.async {
-                    self.errorMessage = "Decoding error: \(error.localizedDescription)"
-                }
+                DispatchQueue.main.async { self.errorMessage = "Decoding error: \(error.localizedDescription)" }
             }
         }.resume()
     }
 
-    
-    
-    func fetchUserDetails(pan: String) {
-        guard let url = URL(string: "http://localhost:3031/UserDetails?PAN=\(pan)") else {
-            DispatchQueue.main.async {
+    func fetchUserDataStore(pan: String) {
+        guard let encodedPan = pan.addingPercentEncoding(withAllowedCharacters: .urlQueryAllowed),
+              let url = URL(string: "http://localhost:3031/UserDetails?PAN=\(encodedPan)") else {
+            Task { @MainActor in
                 self.errorMessage = "Invalid URL"
+                print("Invalid URL")
             }
             return
         }
+        print("Fetching from URL: \(url.absoluteString)")
 
         URLSession.shared.dataTask(with: url) { data, response, error in
             if let error = error {
-                DispatchQueue.main.async {
+                Task { @MainActor in
                     self.errorMessage = "Error: \(error.localizedDescription)"
+                    print(self.errorMessage ?? "Unknown error")
                 }
                 return
             }
 
             guard let data = data else {
-                DispatchQueue.main.async {
+                Task { @MainActor in
                     self.errorMessage = "No data received"
+                    print("No data received")
                 }
                 return
             }
 
+            print("Raw response: \(String(data: data, encoding: .utf8) ?? "nil")")
+
             do {
                 let decodedData = try JSONDecoder().decode(UserDetails.self, from: data)
-                DispatchQueue.main.async {
+                Task { @MainActor in
+                    print("Decoded user details for PAN: \(decodedData.PAN)")
                     self.userDetails = decodedData
+                    self.isAuthenticated = true
+                    self.saveToSwiftDataStore(decodedData)
                 }
             } catch {
-                DispatchQueue.main.async {
+                Task { @MainActor in
                     self.errorMessage = "Decoding error: \(error.localizedDescription)"
+                    print(self.errorMessage ?? "Unknown decode error")
                 }
             }
         }.resume()
     }
+    func saveToSwiftDataStore(_ userDetails: UserDetails) {
+        print("Saving user to SwiftDataStore: \(userDetails.PAN)")
+        let fetchAllDescriptor = FetchDescriptor<SwiftDataStore>()
+        do {
+            let allUsers = try modelContext.fetch(fetchAllDescriptor)
+            for user in allUsers {
+                modelContext.delete(user)
+            }
+            let newEntry = SwiftDataStore(
+                address: userDetails.Address,
+                cardNumber: userDetails.CardNumber,
+                email: userDetails.Email,
+                firstName: userDetails.FirstName,
+                lastName: userDetails.LastName,
+                overdraftTotal: userDetails.Overdraft_total,
+                pan: userDetails.PAN
+            )
+            modelContext.insert(newEntry)
+            try modelContext.save()
+            print("Successfully saved user.")
+        } catch {
+            self.errorMessage = "Failed to save to SwiftData: \(error.localizedDescription)"
+            print(self.errorMessage ?? "Unknown SwiftData error")
+        }
+    }
 }
-
-// MARK: - View
 
 struct ContentViewHomepage: View {
-    var pan: String = "10"
+    @ObservedObject var auth: AuthManager
     @StateObject private var viewModel = Contentview_homepageModel()
-    @Query private var storedUsers: [SwiftDataStore] // Fetch all SwiftDataStore entries
-    @State private var refreshID = UUID() // Dummy state to trigger view refresh
-    
-    
+    @State private var showSeeMore = false
+    @State private var showSettings = false
+    @State private var showOverdraftSheet = false
+
+    // Timer to refresh data every 10 seconds
+    let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+
     var body: some View {
-        VStack {
-            if let userDetails = viewModel.userDetails {
-                Spacer()
-                Text("welcome back: \(storedUsers.map { $0.firstName }.joined(separator: ", "))")
-                    .padding(6)
-                    .background(RoundedRectangle(cornerRadius: 6).fill(Color.gray.opacity(0.7)))
-                    .foregroundColor(.white)
-                    .onAppear() {
-                        viewModel.fetchUserDetails(pan: pan)
-                    }
-                Spacer()
-                
-                VStack {
+        NavigationStack {
+            ZStack {
+                VStack(spacing: 0) {
+                    // Top Bar
                     HStack {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Card Number: \(userDetails.CardNumber)")
-                                .font(.headline)
-                            if let cards = viewModel.cards {
-                                Text("CVV: \(cards.CVV) Expiry Date:\(cards.ExpiryDate)")
-                                    .font(.subheadline)
-                            } else {
-                                Text("Loading card info...")
-                                    .font(.subheadline)
-                                    .foregroundColor(.gray)
-                            }
-                            Text("Balance: \(userDetails.balance)")
-                                .font(.title2)
-                                .padding(6)
-                                .background(RoundedRectangle(cornerRadius: 6).fill(Color.blue))
-                                .foregroundColor(.white)
+                        Button { } label: {
+                            Image(systemName: "line.3.horizontal")
+                                .foregroundColor(.gray)
+                                .font(.system(size: 25))
                         }
+                        .padding(.leading, 15)
+
+                        Spacer()
+
+                        Button {
+                            withAnimation {
+                                showSettings = true
+                            }
+                        } label: {
+                            Image(systemName: "gear")
+                                .foregroundColor(.gray)
+                                .font(.system(size: 25))
+                        }
+                        .padding(.trailing, 15)
                     }
-                    
-                    .padding(12)
-                    .background(RoundedRectangle(cornerRadius: 12).fill(Color.blue.opacity(0.2)))
-                    Text("payees should go here")
-                    VStack {
-                        if !viewModel.ledgerEntries.isEmpty {
-                            List(viewModel.ledgerEntries) { entry in
-                                VStack(alignment: .leading, spacing: 6) {
-                                    Text("TransactionID: \(entry.TransactionID)")
-                                        .font(.headline)
-                                    Text("Date: \(entry.Date)")
-                                        .font(.subheadline)
-                                    Text("Amount: \(entry.Amount)")
-                                        .font(.subheadline)
-                                    Text("Description: \(entry.Description)")
-                                        .font(.body)
+                    .padding(.vertical, 12)
+
+                    Spacer(minLength: 0)
+
+                    if let pan = auth.pan, !pan.isEmpty {
+                        if let userDetails = viewModel.userDetails {
+                            VStack(alignment: .leading, spacing: 22) {
+                                // Card Info
+                                ZStack {
+                                    RoundedRectangle(cornerRadius: 24)
+                                        .fill(
+                                            LinearGradient(
+                                                gradient: Gradient(colors: [
+                                                    Color(red: 0.13, green: 0.52, blue: 1.00),
+                                                    Color(red: 0.37, green: 0.72, blue: 1.00)
+                                                ]),
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            )
+                                        )
+                                        .shadow(color: Color(.systemGray4), radius: 8)
+                                    VStack(alignment: .leading, spacing: 14) {
+                                        if let cards = viewModel.cards {
+                                            Text("Card Number")
+                                                .font(.caption)
+                                                .foregroundColor(.white.opacity(0.85))
+                                            Text(cards.CardNumber)
+                                                .font(.title3).bold()
+                                                .foregroundColor(.white)
+                                            Text("CVV: \(cards.CVV)   Expiry: \(cards.ExpiryDate)")
+                                                .font(.subheadline)
+                                                .foregroundColor(.white.opacity(0.85))
+                                        } else {
+                                            Text("Loading card info…")
+                                                .font(.subheadline)
+                                                .foregroundColor(.white.opacity(0.7))
+                                        }
+                                        HStack {
+                                            Text("Balance")
+                                                .font(.caption)
+                                                .foregroundColor(.white.opacity(0.85))
+                                            Spacer()
+                                            Text("£\(userDetails.balance)")
+                                                .font(.title.bold())
+                                                .foregroundColor(.white)
+                                                .padding(.horizontal, 16)
+                                                .padding(.vertical, 6)
+                                                .background(
+                                                    Capsule()
+                                                        .fill(userDetails.balance.contains("-") ? Color.red : Color.green)
+                                                )
+                                        }
+                                    }
+                                    .padding(28)
                                 }
-                                .padding(.vertical, 4)
+                                .frame(maxWidth: .infinity)
+                                .frame(height: 180)
+                                .padding(.horizontal)
+                                .padding(.top, 6)
+
+                                // Overdraft management button
+                                Button(action: {
+                                    showOverdraftSheet = true
+                                }) {
+                                    HStack {
+                                        Image(systemName: "creditcard")
+                                            .font(.headline)
+                                        Text("Manage Overdraft")
+                                            .font(.headline)
+                                    }
+                                    .frame(maxWidth: .infinity)
+                                    .padding()
+                                    .background(Color.blue)
+                                    .foregroundColor(.white)
+                                    .cornerRadius(12)
+                                }
+                                .padding(.horizontal)
+                                .sheet(isPresented: $showOverdraftSheet) {
+                                    OverdraftManagementView(isPresented: $showOverdraftSheet)
+                                }
                             }
-                        } else if let errorMessage = viewModel.errorMessage {
-                            Text("Error: \(errorMessage)")
-                                .foregroundColor(.red)
-                        } else {
-                            Text("Loading...")
                         }
+                        // ---- Payees Carousel ----
+                        ScrollView(.horizontal, showsIndicators: false) {
+                            HStack(spacing: 24) {
+                                ForEach(0..<3) { _ in
+                                    Button(action: { }) {
+                                        Image("default_payee")
+                                            .resizable()
+                                            .aspectRatio(contentMode: .fill)
+                                            .frame(width: 62, height: 62)
+                                            .clipShape(Circle())
+                                            .overlay(
+                                                Circle()
+                                                    .stroke(Color.blue, lineWidth: 3)
+                                            )
+                                            .background(
+                                                Circle()
+                                                    .fill(Color(.systemBackground))
+                                                    .shadow(radius: 2)
+                                            )
+                                    }
+                                }
+                                Button(action: {}) {
+                                    ZStack {
+                                        Circle()
+                                            .strokeBorder(Color.blue, lineWidth: 3)
+                                            .background(Circle().fill(Color(.systemGray5)))
+                                            .frame(width: 62, height: 62)
+                                        Image(systemName: "plus")
+                                            .font(.system(size: 32, weight: .bold))
+                                            .foregroundColor(.blue)
+                                    }
+                                }
+                            }
+                            .padding(.horizontal)
+                            .padding(.vertical)
+                        }
+
+                        // ---- Transactions ----
+                        Group {
+                            if !viewModel.ledgerEntries.isEmpty {
+                                ScrollView {
+                                    Text("Recent Transactions")
+                                        .font(.headline)
+                                        .padding(.leading)
+                                    VStack(spacing: 10) {
+                                        let maxToShow = 10
+                                        let entriesToShow = Array(viewModel.ledgerEntries.prefix(maxToShow))
+                                        ForEach(entriesToShow.indices, id: \.self) { index in
+                                            let entry = entriesToShow[index]
+                                            NavigationLink(destination: ContentView_Detailed_Transaction(entry: entry)) {
+                                                HStack(spacing: 16) {
+                                                    VStack(alignment: .leading, spacing: 2) {
+                                                        Text(entry.MerchantName)
+                                                            .font(.headline)
+                                                            .foregroundColor(.primary)
+                                                        Text(entry.Date)
+                                                            .font(.caption)
+                                                            .foregroundColor(.secondary)
+                                                        if !entry.Description.isEmpty {
+                                                            Text(entry.Description)
+                                                                .font(.caption2)
+                                                                .foregroundColor(.secondary)
+                                                        }
+                                                    }
+                                                    Spacer()
+                                                    Text("£\(entry.Amount)")
+                                                        .font(.headline.weight(.bold))
+                                                        .foregroundColor(entry.Amount.contains("-") ? .red : .green)
+                                                        .padding(.horizontal, 12)
+                                                        .padding(.vertical, 6)
+                                                        .background(
+                                                            Capsule()
+                                                                .fill(entry.Amount.contains("-") ? Color.red.opacity(0.15) : Color.green.opacity(0.15))
+                                                        )
+                                                }
+                                                .padding(.vertical, 8)
+                                                .padding(.horizontal)
+                                                .background(
+                                                    RoundedRectangle(cornerRadius: 14)
+                                                        .fill(Color(.systemBackground))
+                                                        .shadow(color: Color(.systemGray3).opacity(0.15), radius: 4, x: 0, y: 2)
+                                                )
+                                            }
+                                        }
+                                        if viewModel.ledgerEntries.count > maxToShow {
+                                            NavigationLink(destination: ContentView_Transactions()) {
+                                                Text("See more")
+                                                    .frame(maxWidth: .infinity)
+                                                    .padding(.vertical, 10)
+                                                    .background(
+                                                        RoundedRectangle(cornerRadius: 12)
+                                                            .fill(Color.blue.opacity(0.15))
+                                                    )
+                                            }
+                                            .padding(.horizontal)
+                                        }
+                                    }
+                                }
+                            } else if let errorMessage = viewModel.errorMessage {
+                                Text("Error: \(errorMessage)")
+                                    .foregroundColor(.red)
+                                    .padding(.leading)
+                            } else {
+                                Text("Loading…")
+                                    .foregroundColor(.gray)
+                                    .padding(.leading)
+                            }
+                        }
+                        Spacer(minLength: 0)
+                    } else if let errorMessage = viewModel.errorMessage {
+                        Spacer()
+                        Text("Error: \(errorMessage)")
+                            .foregroundColor(.red)
+                            .padding()
+                    } else {
+                        Spacer()
+                        ProgressView("Loading data…")
+                            .padding()
                     }
                 }
-            } else if let errorMessage = viewModel.errorMessage {
-                Text("Error: \(errorMessage)")
-                    .foregroundColor(.red)
-                    .padding()
-            } else {
-                Text("Loading data...")
-                    .padding()
+            }
+            .background(Color(.systemGroupedBackground).ignoresSafeArea())
+            .onAppear {
+                if let pan = auth.pan, !pan.isEmpty {
+                    viewModel.fetchLedgerEntries(pan: pan)
+                    viewModel.fetchUserDataStore(pan: pan)
+                    viewModel.fetchCards(pan: pan)
+                }
+            }
+            .onReceive(timer) { _ in
+                if let pan = auth.pan, !pan.isEmpty {
+                    viewModel.fetchLedgerEntries(pan: pan)
+                    viewModel.fetchUserDataStore(pan: pan)
+                    viewModel.fetchCards(pan: pan)
+                }
+            }
+
+            // SETTINGS OVERLAY
+            if showSettings {
+                Color.black.opacity(0.3)
+                    .ignoresSafeArea()
+                    .onTapGesture {
+                        withAnimation {
+                            showSettings = false
+                        }
+                    }
+
+                HStack {
+                    Spacer()
+                    SettingsView(authManager: auth)
+                        .frame(width: 320)
+                        .background(
+                            Color(.systemBackground)
+                                .shadow(radius: 8)
+                        )
+                        .transition(.move(edge: .trailing))
+                }
+                .ignoresSafeArea()
             }
         }
-        .onAppear {
-            viewModel.fetchLedgerEntries(pan: pan)
-            viewModel.fetchUserDetails(pan:pan)
-            viewModel.fetchCards(pan:pan)
-        }
+        .animation(.easeInOut, value: showSettings)
     }
 }
 
-struct ContentViewHomepage_Previews: PreviewProvider {
-    static var previews: some View {
-        ContentViewHomepage()
-            .modelContainer(SwiftDataContainer.shared.container)
-    }
-}

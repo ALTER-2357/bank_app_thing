@@ -25,7 +25,11 @@ struct bank_app_thingApp: App {
 
     var body: some Scene {
         WindowGroup {
-            ContentView_main()
+            if let pan = PanManager.pan, !pan.isEmpty {
+                RootView() // <-- Show homepage if PAN exists
+            } else {
+                ContentView_welcome()  // <-- Show welcome if PAN is missing
+            }
         }
         .modelContainer(sharedModelContainer)
     }

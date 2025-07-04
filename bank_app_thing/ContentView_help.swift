@@ -17,7 +17,6 @@ struct ContentView_help: View {
                 ScrollView {
                     VStack(spacing: 20) {
                         // Header
-                   
                         Text("help page")
                             .padding(20)
                             .font(.title)

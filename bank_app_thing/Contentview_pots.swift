@@ -24,6 +24,8 @@ struct Pot: Identifiable, Codable {
     let RequestID: String
 }
 
+
+
 // MARK: - ViewModel
 
 class Contentview_potsModel: ObservableObject {
@@ -31,7 +33,7 @@ class Contentview_potsModel: ObservableObject {
     @Published var errorMessage: String?
     @Published var successMessage: String?
 
-    func fetchPots(pan: Int) {
+    func fetchPots(pan: String) {
         guard let url = URL(string: "http://localhost:3031/Pots?PAN=\(pan)") else {
             DispatchQueue.main.async {
                 self.errorMessage = "Invalid URL"
@@ -78,7 +80,7 @@ class Contentview_potsModel: ObservableObject {
 
     /// Create a new Pot using POST with query parameters (not JSON body)
     func createPot(
-        pan: Int,
+        pan: String,
         name: String,
         style: String,
         amount: String,
@@ -140,7 +142,7 @@ class Contentview_potsModel: ObservableObject {
 
 struct Contentview_pots: View {
     @StateObject private var viewModel = Contentview_potsModel()
-    @State private var pan = 10 // Example PAN
+    @State private var pan: String = PanManager.pan ?? ""
 
     // For demo: fields to create a new pot
     @State private var newPotName = ""
@@ -163,7 +165,7 @@ struct Contentview_pots: View {
                     }) {
                         Image(systemName: "plus.circle.fill")
                             .font(.largeTitle)
-                            .foregroundColor(.blue)
+                            .foregroundColor(.gray)
                     }
                     .padding()
                 }
@@ -172,26 +174,13 @@ struct Contentview_pots: View {
             if !viewModel.pots.isEmpty {
                 List(viewModel.pots) { pot in
                     VStack(alignment: .leading, spacing: 6) {
-                        Text("Pot id: \(pot.Id)")
-                            .font(.headline)
                         Text("Pot Name: \(pot.name)")
                             .font(.headline)
-                        Text("Pot Style: \(pot.style)")
-                            .font(.subheadline)
-                        Text("Balance: \(pot.Balance)")
-                            .font(.subheadline)
-                        Text("Currency: \(pot.currency)")
-                            .font(.headline)
-                        Text("Interest Rate: \(pot.interestRate)")
-                            .font(.headline)
-                        Text("Updated: \(pot.updated)")
-                            .font(.subheadline)
-                        Text("Created: \(pot.created)")
-                            .font(.subheadline)
-                        Text("Deleted: \(pot.deleted)")
-                            .font(.subheadline)
-                        Text("Request ID: \(pot.RequestID)")
-                            .font(.subheadline)
+                        HStack { Text("Balance: \(pot.Balance)")
+                                .font(.subheadline)
+                            Text("Interest Rate: \(pot.interestRate)")
+                                .font(.headline)
+                        }
                     }
                     .padding(.vertical, 4)
                 }
@@ -202,7 +191,7 @@ struct Contentview_pots: View {
                 Text("Loading...")
             }
 
-            Divider().padding(.vertical, 10)
+         
 
             if showingCreatePotForm {
                 VStack(spacing: 8) {

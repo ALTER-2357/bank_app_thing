@@ -1,4 +1,3 @@
-
 import SwiftUI
 import SwiftData
 import Combine
@@ -31,8 +30,8 @@ struct UserDetails: Codable {
     let Email: String
     let FirstName: String
     let LastName: String
-    let LedgerEntry: String
     let balance: String
+    let MobileNumber: String
     let Overdraft_total: String
     let Overdraftstate: String
     let PAN: String
@@ -47,17 +46,15 @@ class SwiftDataStore: Identifiable {
     var email: String
     var firstName: String
     var lastName: String
-    var ledgerEntry: String
     var overdraftTotal: String
     var pan: String
 
-    init(address: String, cardNumber: String, email: String, firstName: String, lastName: String, ledgerEntry: String, overdraftTotal: String, pan: String) {
+    init(address: String, cardNumber: String, email: String, firstName: String, lastName: String, overdraftTotal: String, pan: String) {
         self.address = address
         self.cardNumber = cardNumber
         self.email = email
         self.firstName = firstName
         self.lastName = lastName
-        self.ledgerEntry = ledgerEntry
         self.overdraftTotal = overdraftTotal
         self.pan = pan
     }
@@ -79,6 +76,44 @@ class UserDetailsViewModel: ObservableObject {
         self.modelContext = modelContext
     }
 
+    func fetchUserDataStore(pan: String) {
+            guard let url = URL(string: "http://localhost:3031/UserDetails?PAN=\(pan)") else {
+                self.errorMessage = "Invalid URL"
+                return
+            }
+
+            URLSession.shared.dataTask(with: url) { data, response, error in
+                if let error = error {
+                    DispatchQueue.main.async {
+                        self.errorMessage = "Error: \(error.localizedDescription)"
+                    }
+                    return
+                }
+
+                guard let data = data else {
+                    DispatchQueue.main.async {
+                        self.errorMessage = "No data received"
+                    }
+                    return
+                }
+
+                do {
+                    let decodedData = try JSONDecoder().decode(UserDetails.self, from: data)
+                    DispatchQueue.main.async {
+                        self.userDetails = decodedData
+                        self.saveToSwiftDataStore(decodedData)
+                    }
+                } catch {
+                    DispatchQueue.main.async {
+                        self.errorMessage = "Decoding error: \(error.localizedDescription)"
+                    }
+                }
+            }.resume()
+        }
+    
+
+    
+    
     func fetchUserDetails(pan: String) {
         guard let url = URL(string: "http://localhost:3031/UserDetails?PAN=\(pan)") else {
             self.errorMessage = "Invalid URL"
@@ -129,7 +164,6 @@ class UserDetailsViewModel: ObservableObject {
                              existingUser.email == userDetails.Email &&
                              existingUser.firstName == userDetails.FirstName &&
                              existingUser.lastName == userDetails.LastName &&
-                             existingUser.ledgerEntry == userDetails.LedgerEntry &&
                              existingUser.overdraftTotal == userDetails.Overdraft_total
 
                 if isSame {
@@ -143,7 +177,6 @@ class UserDetailsViewModel: ObservableObject {
                     existingUser.email = userDetails.Email
                     existingUser.firstName = userDetails.FirstName
                     existingUser.lastName = userDetails.LastName
-                    existingUser.ledgerEntry = userDetails.LedgerEntry
                     existingUser.overdraftTotal = userDetails.Overdraft_total
                     // No need to insert, just update fields
                     print("changes detected, now save.")
@@ -156,7 +189,6 @@ class UserDetailsViewModel: ObservableObject {
                     email: userDetails.Email,
                     firstName: userDetails.FirstName,
                     lastName: userDetails.LastName,
-                    ledgerEntry: userDetails.LedgerEntry,
                     overdraftTotal: userDetails.Overdraft_total,
                     pan: userDetails.PAN
                 )
@@ -221,7 +253,6 @@ struct UserDetailsView: View {
                     Text("Balance: \(userDetails.balance)")
                     Text("Address: \(userDetails.Address)")
                     Text("Card Number: \(userDetails.CardNumber)")
-                    Text("Ledger Entry: \(userDetails.LedgerEntry)")
                     Text("Overdraft Total: \(userDetails.Overdraft_total)")
                     Text("Overdraft State: \(userDetails.Overdraftstate)")
                     Text("PAN: \(userDetails.PAN)")
@@ -303,4 +334,3 @@ struct UserDetailsView_Previews: PreviewProvider {
         UserDetailsView()
     }
 }
-
