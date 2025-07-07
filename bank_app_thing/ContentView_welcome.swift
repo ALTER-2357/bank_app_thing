@@ -9,6 +9,7 @@
 import SwiftUI
 
 struct ContentView_welcome: View {
+    @StateObject private var auth = AuthManager()
     // State variables kept for future extensibility
     @State private var email: String = ""
     @State private var firstName: String = ""
@@ -52,7 +53,7 @@ struct ContentView_welcome: View {
                             .padding(.horizontal)
                         
                         VStack(spacing: 18) {
-                            NavigationLink(destination: ContentView_join0()) {
+                            NavigationLink(destination: ContentView_join0(auth: auth)) {
                                 Text("Join")
                                     .font(.headline)
                                     .foregroundColor(.white)
@@ -65,7 +66,7 @@ struct ContentView_welcome: View {
                             .padding(.top, 20)
                             .disabled(isLoading)
                             
-                            NavigationLink(destination: LoginView(auth: AuthManager())) {
+                            NavigationLink(destination: LoginView(auth: auth)) {
                                 Text("Login")
                                     .font(.headline)
                                     .foregroundColor(.white)

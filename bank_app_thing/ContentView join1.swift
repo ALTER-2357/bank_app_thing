@@ -10,6 +10,7 @@
 import SwiftUI
 
 struct ContentView_join1: View {
+    @ObservedObject var auth: AuthManager
     @Binding var firstName: String
     @Binding var lastName: String
     
@@ -92,6 +93,7 @@ struct ContentView_join1: View {
             
             NavigationLink(
                 destination: ContentView_join2(
+                    auth: auth,
                     firstName: $firstName,
                     lastName: $lastName,
                     email: $email,

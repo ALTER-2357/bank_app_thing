@@ -66,6 +66,20 @@ class AuthManager: ObservableObject {
         }
     }
 
+    // MARK: - Set PAN
+    
+    func setPan(_ newPan: String) {
+        // Update local state
+        pan = newPan
+        isAuthenticated = !newPan.isEmpty
+        
+        // Save to UserDefaults
+        savePanToUserDefaults(newPan)
+        
+        // The polling timer will update SwiftData when user data is fetched
+        // This ensures the PAN is immediately available for authentication
+    }
+
     // MARK: - Logout
 
     func logout() {

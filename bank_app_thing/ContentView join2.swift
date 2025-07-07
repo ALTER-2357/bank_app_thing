@@ -9,6 +9,7 @@
 import SwiftUI
 
 struct ContentView_join2: View {
+    @ObservedObject var auth: AuthManager
     @Binding var firstName: String
     @Binding var lastName: String
     @Binding var email: String
@@ -110,13 +111,6 @@ struct ContentView_join2: View {
         .shadow(color: Color.black.opacity(0.08), radius: 4, x: 0, y: 3)
     }
 
-    @MainActor
-    private func refreshAll(pan: String) {
-        let userDetailsVM = UserDetailsViewModel()
-        userDetailsVM.fetchUserDataStore(pan: pan)
-        print("Refreshed!")
-    }
-
     private func submitToServer() {
         print("Form values before submission:")
         print("First Name: \(firstName)")
@@ -187,11 +181,13 @@ struct ContentView_join2: View {
                     let responseString = String(data: data, encoding: .utf8) ?? "No readable data"
                     print("Server response body: \(responseString)")
 
-                    let pan = responseString
-                    refreshAll(pan: pan)
-
                     if responseString.contains("invalid character") {
                         alertMessage = "Server couldn't understand our data format."
+                    } else {
+                        // Store the PAN using AuthManager when we get it from the backend
+                        let pan = responseString.trimmingCharacters(in: .whitespacesAndNewlines)
+                        auth.setPan(pan)
+                        print("PAN stored in AuthManager: \(pan)")
                     }
                 }
 
