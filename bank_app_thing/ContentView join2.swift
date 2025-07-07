@@ -183,11 +183,6 @@ struct ContentView_join2: View {
 
                     if responseString.contains("invalid character") {
                         alertMessage = "Server couldn't understand our data format."
-                    } else {
-                        // Store the PAN using AuthManager when we get it from the backend
-                        let pan = responseString.trimmingCharacters(in: .whitespacesAndNewlines)
-                        auth.setPan(pan)
-                        print("PAN stored in AuthManager: \(pan)")
                     }
                 }
 
@@ -195,6 +190,14 @@ struct ContentView_join2: View {
                 case 200..<300:
                     alertMessage = "Registration successful!"
                     registrationSuccess = true
+                    
+                    // Store the PAN using AuthManager only on successful registration
+                    if let data = data {
+                        let responseString = String(data: data, encoding: .utf8) ?? "No readable data"
+                        let pan = responseString.trimmingCharacters(in: .whitespacesAndNewlines)
+                        auth.setPan(pan)
+                        print("PAN stored in AuthManager: \(pan)")
+                    }
                 case 400:
                     alertMessage = "Bad request (400) - please check your data."
                 default:
