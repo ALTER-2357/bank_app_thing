@@ -4,6 +4,7 @@ import SwiftData
 @MainActor
 class LoginViewModel: ObservableObject {
     @Published var pan: String = ""
+    @Published var Email: String = ""
     @Published var errorMessage: String?
     @Published var isAuthenticated: Bool = false
     @Published var userDetails: UserDetails?
@@ -16,42 +17,63 @@ class LoginViewModel: ObservableObject {
 
     func login() {
         errorMessage = nil
-        fetchUserDataStore(pan: pan)
+        Task {
+            await logintoFuzznyEngma(Email: Email)
+        }
     }
 
-    private func fetchUserDataStore(pan: String) {
-        guard let url = URL(string: "http://localhost:3031/UserDetails?PAN=\(pan)") else {
-            updateError("Invalid URL")
+    private func logintoFuzznyEngma(Email: String) async {
+        guard let url = URL(string: "http://localhost:3031/login?Email=\(Email)") else {
+            await updateError("Invalid URL")
             return
         }
 
-        URLSession.shared.dataTask(with: url) { data, response, error in
-            if let error = error {
-                self.updateError("Network error: \(error.localizedDescription)")
-                return
-            }
-            guard let data = data else {
-                self.updateError("No data received from server.")
-                return
-            }
-            do {
-                let decodedData = try JSONDecoder().decode(UserDetails.self, from: data)
-                Task { @MainActor in
-                    self.userDetails = decodedData
-                    self.isAuthenticated = true
-                    self.saveToSwiftDataStore(decodedData)
-                }
-            } catch {
-                self.updateError("Failed to decode user data: \(error.localizedDescription)")
-            }
-        }.resume()
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            let decodedData = try JSONDecoder().decode(UserDetails.self, from: data)
+            self.userDetails = decodedData
+            self.isAuthenticated = true
+            saveToSwiftDataStore(decodedData)
+        } catch {
+            await updateError("Failed to fetch or decode user data: \(error.localizedDescription)")
+        }
     }
 
-    private func updateError(_ message: String) {
-        Task { @MainActor in
-            self.errorMessage = message
-            self.isAuthenticated = false
+    private func fetchUserDataStore(pan: String) async {
+        guard let url = URL(string: "http://localhost:3031/UserDetails?PAN=\(pan)") else {
+            await updateError("Invalid URL")
+            return
         }
+
+        do {
+            let (data, response) = try await URLSession.shared.data(from: url)
+            if let httpResponse = response as? HTTPURLResponse, httpResponse.statusCode == 200 {
+                let decodedData = try JSONDecoder().decode(UserDetails.self, from: data)
+                self.userDetails = decodedData
+                self.isAuthenticated = true
+                saveToSwiftDataStore(decodedData)
+            } else {
+                // Decode the error as a JSON string
+                if let errorMessage = try? JSONDecoder().decode(String.self, from: data) {
+                    print("Server error message: \(errorMessage)")
+                    await updateError("Server error: \(errorMessage)")
+                } else {
+                    // Fallback if decoding fails
+                    let fallbackError = String(data: data, encoding: .utf8) ?? "Unknown server error"
+                    print("Server error message: \(fallbackError)")
+                    await updateError("Server error: \(fallbackError)")
+                }
+            }
+        } catch {
+            await updateError("Failed to fetch or decode user data: \(error.localizedDescription)")
+        }
+        
+    }
+
+    @MainActor
+    private func updateError(_ message: String) async {
+        self.errorMessage = message
+        self.isAuthenticated = false
     }
 
     private func saveToSwiftDataStore(_ userDetails: UserDetails) {
@@ -73,7 +95,9 @@ class LoginViewModel: ObservableObject {
             modelContext.insert(newEntry)
             try modelContext.save()
         } catch {
-            updateError("Failed to save user locally: \(error.localizedDescription)")
+            Task { @MainActor in
+                self.errorMessage = "Failed to save user locally: \(error.localizedDescription)"
+            }
         }
     }
 
@@ -83,14 +107,33 @@ class LoginViewModel: ObservableObject {
         userDetails = nil
         errorMessage = nil
     }
+
+    // --- Added refresh code here ---
+    @MainActor
+    func refresh() async {
+        guard isAuthenticated, let email = userDetails?.Email else { return }
+        guard let url = URL(string: "http://localhost:3031/login?Email=\(email)") else {
+            await updateError("Invalid URL")
+            return
+        }
+
+        do {
+            let (data, _) = try await URLSession.shared.data(from: url)
+            let decodedData = try JSONDecoder().decode(UserDetails.self, from: data)
+            self.userDetails = decodedData
+            saveToSwiftDataStore(decodedData)
+        } catch {
+            await updateError("Failed to refresh user data: \(error.localizedDescription)")
+        }
+    }
+    // ---
 }
-
-
 
 struct LoginView: View {
     @ObservedObject var auth: AuthManager
     @StateObject private var viewModel: LoginViewModel
     @FocusState private var panFieldIsFocused: Bool
+    @State private var navigateToHomepage = false
 
     init(auth: AuthManager) {
         self.auth = auth
@@ -115,6 +158,22 @@ struct LoginView: View {
                 .padding(.horizontal, 28)
                 .padding(.top, 60)
                 .onAppear { panFieldIsFocused = true }
+                // NavigationLink triggers navigation to ContentViewHomepage when navigateToHomepage is true
+                NavigationLink(
+                    destination: ContentViewHomepage(auth: auth),
+                    isActive: $navigateToHomepage,
+                    label: { EmptyView() }
+                )
+                .hidden()
+            }
+            .onChange(of: viewModel.isAuthenticated) { newValue in
+                if newValue {
+                    auth.pan = viewModel.pan
+                    Task {
+                        await viewModel.refresh() // <-- Correct function call
+                        navigateToHomepage = true
+                    }
+                }
             }
         }
     }
@@ -128,23 +187,27 @@ struct LoginView: View {
 
     private var panInputSection: some View {
         VStack(alignment: .leading, spacing: 12) {
-            Text("PAN")
+            Text("Email")
                 .font(.headline)
-                .foregroundStyle(.color0)
-            TextField("Enter PAN", text: $viewModel.pan)
-                .textFieldStyle(.plain)
+                .foregroundColor(Color.color0) // Make sure Color.color0 exists
+
+            TextField("Enter your email", text: $viewModel.Email)
+                .textFieldStyle(PlainTextFieldStyle())
                 .padding(12)
                 .background(
                     RoundedRectangle(cornerRadius: 8)
-                        .strokeBorder(Color.color0.opacity(0.2), lineWidth: 1)
-                        .background(Color.white.cornerRadius(8))
+                        .fill(Color.white)
+                        .shadow(color: Color.black.opacity(0.04), radius: 2, x: 0, y: 2)
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color.color0.opacity(0.2), lineWidth: 1)
                 )
                 .keyboardType(.asciiCapable)
                 .focused($panFieldIsFocused)
                 .submitLabel(.go)
                 .onSubmit { viewModel.login() }
                 .foregroundColor(.black)
-                .shadow(color: Color.black.opacity(0.04), radius: 2, x: 0, y: 2)
         }
     }
 
@@ -165,15 +228,14 @@ struct LoginView: View {
                 .font(.headline)
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 14)
-                .background(viewModel.pan.isEmpty ? Color.gray.opacity(0.3) : Color.blue)
+                .background(viewModel.Email.isEmpty ? Color.gray.opacity(0.3) : Color.blue)
                 .foregroundColor(.white)
                 .cornerRadius(12)
                 .shadow(color: Color.blue.opacity(0.08), radius: 2, x: 0, y: 2)
         }
-        
-        .disabled(viewModel.pan.isEmpty)
+        .disabled(viewModel.Email.isEmpty)
         .padding(.top, 8)
     }
 }
 
-
+// email to server the server will respond with 200 ok and pan or 300? denided

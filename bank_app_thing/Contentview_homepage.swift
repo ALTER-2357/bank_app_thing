@@ -145,8 +145,10 @@ struct ContentViewHomepage: View {
     @State private var showSeeMore = false
     @State private var showSettings = false
     @State private var showOverdraftSheet = false
+    @State private var showRecurringSheet = false
+    @State private var showMenu = false // For overlay
 
-    // Timer to refresh data every 10 seconds
+    // Timer to refresh data every 1 second
     let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     var body: some View {
@@ -155,7 +157,11 @@ struct ContentViewHomepage: View {
                 VStack(spacing: 0) {
                     // Top Bar
                     HStack {
-                        Button { } label: {
+                        Button {
+                            withAnimation {
+                                showMenu = true // Show overlay when tapped
+                            }
+                        } label: {
                             Image(systemName: "line.3.horizontal")
                                 .foregroundColor(.gray)
                                 .font(.system(size: 25))
@@ -188,11 +194,11 @@ struct ContentViewHomepage: View {
                                         .fill(
                                             LinearGradient(
                                                 gradient: Gradient(colors: [
-                                                    Color(red: 0.13, green: 0.52, blue: 1.00),
-                                                    Color(red: 0.37, green: 0.72, blue: 1.00)
+                                                    Color(red: 0, green: 1, blue: 0.698),
+                                                    Color(red: 0.0196, green: 0, blue: 1)
                                                 ]),
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
+                                                startPoint: UnitPoint(x: 1.0, y: 1.0),
+                                                endPoint: UnitPoint(x: -0.2, y: -0.2)
                                             )
                                         )
                                         .shadow(color: Color(.systemGray4), radius: 8)
@@ -235,26 +241,8 @@ struct ContentViewHomepage: View {
                                 .padding(.horizontal)
                                 .padding(.top, 6)
 
-                                // Overdraft management button
-                                Button(action: {
-                                    showOverdraftSheet = true
-                                }) {
-                                    HStack {
-                                        Image(systemName: "creditcard")
-                                            .font(.headline)
-                                        Text("Manage Overdraft")
-                                            .font(.headline)
-                                    }
-                                    .frame(maxWidth: .infinity)
-                                    .padding()
-                                    .background(Color.blue)
-                                    .foregroundColor(.white)
-                                    .cornerRadius(12)
-                                }
-                                .padding(.horizontal)
-                                .sheet(isPresented: $showOverdraftSheet) {
-                                    OverdraftManagementView(isPresented: $showOverdraftSheet)
-                                }
+                                // Button row for Overdraft/Recurring REMOVED
+                                // (the VStack with the two buttons and its .padding(.horizontal))
                             }
                         }
                         // ---- Payees Carousel ----
@@ -360,22 +348,66 @@ struct ContentViewHomepage: View {
                                     .foregroundColor(.red)
                                     .padding(.leading)
                             } else {
+
                                 Text("Loading…")
                                     .foregroundColor(.gray)
                                     .padding(.leading)
+                                    .onAppear {
+                                        if let pan = auth.pan, !pan.isEmpty {
+                                            viewModel.fetchLedgerEntries(pan: pan)
+                                            viewModel.fetchUserDataStore(pan: pan)
+                                            viewModel.fetchCards(pan: pan)
+                                        }
+                                    }
                             }
                         }
-                        Spacer(minLength: 0)
-                    } else if let errorMessage = viewModel.errorMessage {
-                        Spacer()
-                        Text("Error: \(errorMessage)")
-                            .foregroundColor(.red)
-                            .padding()
-                    } else {
-                        Spacer()
-                        ProgressView("Loading data…")
-                            .padding()
                     }
+                }
+
+                // --- Hamburger Menu Overlay ---
+                if showMenu {
+                    Color.black.opacity(0.3)
+                        .ignoresSafeArea()
+                        .onTapGesture {
+                            withAnimation {
+                                showMenu = false
+                            }
+                        }
+
+                    HStack {
+                        SideMenuView()
+                            .frame(width: 260)
+                            .background(
+                                Color(.systemBackground)
+                                    .shadow(radius: 8)
+                            )
+                            .transition(.move(edge: .leading))
+                        Spacer()
+                    }
+                    .ignoresSafeArea()
+                }
+
+                // SETTINGS OVERLAY
+                if showSettings {
+                    Color.black.opacity(0.3)
+                        .ignoresSafeArea()
+                        .onTapGesture {
+                            withAnimation {
+                                showSettings = false
+                            }
+                        }
+
+                    HStack {
+                        Spacer()
+                        SettingsView(authManager: auth)
+                            .frame(width: 320)
+                            .background(
+                                Color(.systemBackground)
+                                    .shadow(radius: 8)
+                            )
+                            .transition(.move(edge: .trailing))
+                    }
+                    .ignoresSafeArea()
                 }
             }
             .background(Color(.systemGroupedBackground).ignoresSafeArea())
@@ -393,31 +425,68 @@ struct ContentViewHomepage: View {
                     viewModel.fetchCards(pan: pan)
                 }
             }
-
-            // SETTINGS OVERLAY
-            if showSettings {
-                Color.black.opacity(0.3)
-                    .ignoresSafeArea()
-                    .onTapGesture {
-                        withAnimation {
-                            showSettings = false
-                        }
-                    }
-
-                HStack {
-                    Spacer()
-                    SettingsView(authManager: auth)
-                        .frame(width: 320)
-                        .background(
-                            Color(.systemBackground)
-                                .shadow(radius: 8)
-                        )
-                        .transition(.move(edge: .trailing))
-                }
-                .ignoresSafeArea()
-            }
         }
+        .navigationBarBackButtonHidden(true)
         .animation(.easeInOut, value: showSettings)
+        .animation(.easeInOut, value: showMenu)
     }
 }
 
+// Example SideMenuView
+struct SideMenuView: View {
+    @State private var showOverdraftSheet = false
+    @State private var showRecurringSheet = false
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 24) {
+            Text("Menu")
+                .font(.title2)
+                .bold()
+                .padding(.top, 40)
+
+            Button(action: {
+                showOverdraftSheet = true
+            }) {
+                HStack {
+                    Image(systemName: "creditcard")
+                        .font(.headline)
+                    Text("Manage Overdraft")
+                        .font(.headline)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .frame(height: 54)
+            .background(Color.blue)
+            .foregroundColor(.white)
+            .cornerRadius(12)
+            .sheet(isPresented: $showOverdraftSheet) {
+                OverdraftManagementView(isPresented: $showOverdraftSheet)
+            }
+
+            Button(action: {
+                showRecurringSheet = true
+            }) {
+                HStack {
+                    Image(systemName: "arrow.2.squarepath")
+                        .font(.headline)
+                    Text("Manage Recurring Payment")
+                        .font(.headline)
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+            .frame(height: 54)
+            .background(Color.blue)
+            .foregroundColor(.white)
+            .cornerRadius(12)
+            .sheet(isPresented: $showRecurringSheet) {
+                // Replace with your recurring payment view if needed
+                OverdraftManagementView(isPresented: $showRecurringSheet)
+            }
+
+            Spacer()
+        }
+        .padding(.horizontal)
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .background(Color(.systemGroupedBackground))
+    }
+}

@@ -15,12 +15,11 @@ struct RootView: View {
 
     var body: some View {
         Group {
-
                 TabView {
                     // Home Tab
-                    ContentViewHomepage(auth: auth)
-                        .tabItem {
-                            Image(systemName: "house.fill")
+                   ContentViewHomepage(auth: auth)
+                       .tabItem {
+                           Image(systemName: "house.fill")
                             Text("Home")
                         }
                     // Transactions Tab
@@ -32,14 +31,12 @@ struct RootView: View {
                       
                     
                     // pots Tab ContentView_transfers
-                 
                     Contentview_pots()
                         .tabItem {
                             Image("custom.pot")
                             Text("pots")
                         }
                     
-                
                     ContentView_help()
                         .tabItem {
                             Image(systemName: "questionmark.circle")

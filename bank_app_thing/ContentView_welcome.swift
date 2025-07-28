@@ -83,9 +83,9 @@ struct ContentView_welcome: View {
                     }
                     .padding(.horizontal, 24)
                     .padding(.vertical, 30)
-                }
-            }
-        }
+                }.navigationBarBackButtonHidden(true)
+            }.navigationBarBackButtonHidden(true)
+        }.navigationBarBackButtonHidden(true)
     }
 }
 
