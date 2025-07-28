@@ -1,15 +1,8 @@
-//
-//  SettingsView.swift
-//  bank_app_thing
-//
-//  Created by lewis mills on 20/06/2025.
-//
-
-
 import SwiftUI
 
 struct SettingsView: View {
     @ObservedObject var authManager: AuthManager
+    @State private var navigateToWelcome = false
 
     var body: some View {
         NavigationStack {
@@ -20,11 +13,10 @@ struct SettingsView: View {
                     Text("SettingsView")
                         .font(.title)
                 }
-              
+
                 Button(role: .destructive) {
                     authManager.logout()
-
-                    
+                    navigateToWelcome = true
                 } label: {
                     Text("Log Out")
                         .font(.headline)
@@ -35,7 +27,16 @@ struct SettingsView: View {
                         .cornerRadius(12)
                 }
                 .padding(.horizontal, 24)
+
                 Spacer()
+
+                // Hidden NavigationLink to trigger navigation
+                NavigationLink(
+                    destination: ContentView_welcome(),
+                    isActive: $navigateToWelcome,
+                    label: { EmptyView() }
+                )
+                .hidden()
             }
         }
     }

@@ -1,4 +1,3 @@
-// using this code and you make a view that allows a user to review and enter a amount
 import SwiftUI
 import Combine
 
@@ -38,6 +37,7 @@ class ContentView_TransactionsModel: ObservableObject {
             if let error = error {
                 DispatchQueue.main.async {
                     self.errorMessage = "Error: \(error.localizedDescription)"
+                    self.ledgerEntries = []
                 }
                 return
             }
@@ -45,6 +45,7 @@ class ContentView_TransactionsModel: ObservableObject {
             guard let data = data else {
                 DispatchQueue.main.async {
                     self.errorMessage = "No data received"
+                    self.ledgerEntries = []
                 }
                 return
             }
@@ -53,10 +54,12 @@ class ContentView_TransactionsModel: ObservableObject {
                 let decodedData = try JSONDecoder().decode([LedgerEntry].self, from: data)
                 DispatchQueue.main.async {
                     self.ledgerEntries = Array(decodedData.prefix(100000))
+                    self.errorMessage = self.ledgerEntries.isEmpty ? "No payees found" : nil
                 }
             } catch {
                 DispatchQueue.main.async {
                     self.errorMessage = "Decoding error: \(error.localizedDescription)"
+                    self.ledgerEntries = []
                 }
             }
         }.resume()
@@ -69,16 +72,14 @@ struct ContentView_Transactions: View {
     @StateObject private var viewModel = ContentView_TransactionsModel()
     @State private var pan: String = PanManager.pan ?? ""
     
-    
-
     var body: some View {
         NavigationView {
             VStack(alignment: .leading, spacing: 0) {
                 Text("Transactions")
                     .font(.largeTitle).bold()
                     .padding([.top, .horizontal])
-                
-                if !viewModel.ledgerEntries.isEmpty {
+            
+                  if !viewModel.ledgerEntries.isEmpty {
                     List {
                         ForEach(viewModel.ledgerEntries) { entry in
                             NavigationLink(destination: ContentView_Detailed_Transaction(entry: entry)) {
@@ -91,17 +92,12 @@ struct ContentView_Transactions: View {
                     .refreshable {
                         viewModel.fetchLedgerEntries(pan: pan)
                     }
-                } else if let errorMessage = viewModel.errorMessage {
-                    Spacer()
-                    Text("Error: \(errorMessage)")
-                        .foregroundColor(.red)
-                        .padding()
-                    Spacer()
                 } else {
+                    // Loading state
                     Spacer()
                     HStack {
                         Spacer()
-                        ProgressView("Loading...")
+                        ProgressView("You don't have any payees yet, create one by clicking the plus button")
                             .progressViewStyle(CircularProgressViewStyle())
                         Spacer()
                     }
@@ -163,3 +159,6 @@ struct TransactionListRow: View {
         .shadow(color: Color(.systemGray5), radius: 2, x: 0, y: 1)
     }
 }
+
+
+

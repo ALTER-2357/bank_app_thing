@@ -9,6 +9,7 @@
 import SwiftUI
 
 struct ContentView_join0: View {
+    @ObservedObject var auth: AuthManager
     @State private var email: String = ""
     @State private var firstName: String = ""
     @State private var lastName: String = ""
@@ -61,7 +62,7 @@ struct ContentView_join0: View {
 
     private var nextButton: some View {
         NavigationLink(
-            destination: ContentView_join1(firstName: $firstName, lastName: $lastName)
+            destination: ContentView_join1(auth: auth, firstName: $firstName, lastName: $lastName)
         ) {
             Text("Next")
                 .font(.headline)

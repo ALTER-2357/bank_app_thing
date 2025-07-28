@@ -34,3 +34,5 @@ struct bank_app_thingApp: App {
         .modelContainer(sharedModelContainer)
     }
 }
+
+
