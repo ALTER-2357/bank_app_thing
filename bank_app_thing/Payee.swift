@@ -1,4 +1,12 @@
 //
+//  Payee.swift
+//  bank_app_thing
+//
+//  Created by lewis mills on 31/07/2025.
+//
+
+
+//
 //  Contentview_transfers.swift
 //  bank_app_thing
 //
@@ -61,8 +69,6 @@ class Contentview_transfersModel: ObservableObject {
     }
 }
 
-
-
 // MARK: - Main Transfers View
 
 struct Contentview_transfers: View {
@@ -81,7 +87,10 @@ struct Contentview_transfers: View {
                         .foregroundColor(.primary)
                     Spacer()
                     Button(action: {
-                        // Action for adding payee (to be implemented)
+                        // Show the payee review view with a "new" blank payee or trigger add-payee logic
+                        // For demonstration, let's show a blank TransferReviewView
+                        selectedPayee = nil
+                        showReview = true
                     }) {
                         Image(systemName: "plus.circle.fill")
                             .font(.system(size: 32))
@@ -95,20 +104,16 @@ struct Contentview_transfers: View {
 
                 // Payees List
                 if viewModel.payees.isEmpty {
-                    
                     VStack {
                         Spacer()
                         Text("You don't have any payees yet,")
                             .foregroundColor(.secondary)
                         Text("create one by clicking the plus button.")
                             .foregroundColor(.secondary)
-                            
                         Spacer()
-    
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
-                }else if !viewModel.payees.isEmpty {
-                    
+                } else if !viewModel.payees.isEmpty {
                     List {
                         ForEach(viewModel.payees) { payee in
                             Button(action: {
@@ -186,16 +191,37 @@ struct Contentview_transfers: View {
                 viewModel.fetchPayees(pan: pan)
             }
             .sheet(isPresented: $showReview) {
+                // Show review for existing or new payee
                 if let payee = selectedPayee {
                     TransferReviewView(payee: payee, isPresented: $showReview)
+                } else {
+                    // If adding a new payee, present an empty/new TransferReviewView
+                    TransferReviewView(payee: nil, isPresented: $showReview)
                 }
             }
         }
     }
 }
 
-struct Contentview_transfers_Previews: PreviewProvider {
-    static var previews: some View {
-        Contentview_transfers()
+// Dummy PanManager for code completeness
+struct PanManager {
+    static var pan: String? = "1234567890"
+}
+
+// Dummy TransferReviewView for preview/demo
+struct TransferReviewView: View {
+    var payee: Payee?
+    @Binding var isPresented: Bool
+
+    var body: some View {
+        VStack {
+            Text(payee?.payeeName ?? "Add New Payee")
+                .font(.title)
+                .padding()
+            Button("Close") {
+                isPresented = false
+            }
+            .padding()
+        }
     }
 }

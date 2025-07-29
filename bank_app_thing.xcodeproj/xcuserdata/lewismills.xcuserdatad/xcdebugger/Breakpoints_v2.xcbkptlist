@@ -46,6 +46,64 @@
             endingLineNumber = "24"
             landmarkName = "ContentView_TransactionsModel"
             landmarkType = "3">
+            <Locations>
+               <Location
+                  uuid = "7B5B900E-5EF1-4FF7-B302-E9246027B6B7 - ab9895c4e71171eb"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "bank_app_thing.ContentView_TransactionsModel.deinit"
+                  moduleName = "bank_app_thing.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/lewismills/code/BANKING%20APP/bank_app_thing/bank_app_thing/ContentView_Transactions.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "0"
+                  endingLineNumber = "0">
+               </Location>
+               <Location
+                  uuid = "7B5B900E-5EF1-4FF7-B302-E9246027B6B7 - de17571b200bd4b4"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "bank_app_thing.ContentView_TransactionsModel.__deallocating_deinit"
+                  moduleName = "bank_app_thing.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/lewismills/code/BANKING%20APP/bank_app_thing/bank_app_thing/ContentView_Transactions.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "0"
+                  endingLineNumber = "0">
+               </Location>
+               <Location
+                  uuid = "7B5B900E-5EF1-4FF7-B302-E9246027B6B7 - 4b55fc46d8d3a520"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "bank_app_thing.ContentView_TransactionsModel.__allocating_init() -&gt; bank_app_thing.ContentView_TransactionsModel"
+                  moduleName = "bank_app_thing.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/lewismills/code/BANKING%20APP/bank_app_thing/bank_app_thing/ContentView_Transactions.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "0"
+                  endingLineNumber = "0">
+               </Location>
+               <Location
+                  uuid = "7B5B900E-5EF1-4FF7-B302-E9246027B6B7 - 7265eafe06b8c8e8"
+                  shouldBeEnabled = "Yes"
+                  ignoreCount = "0"
+                  continueAfterRunningActions = "No"
+                  symbolName = "bank_app_thing.ContentView_TransactionsModel.init() -&gt; bank_app_thing.ContentView_TransactionsModel"
+                  moduleName = "bank_app_thing.debug.dylib"
+                  usesParentBreakpointCondition = "Yes"
+                  urlString = "file:///Users/lewismills/code/BANKING%20APP/bank_app_thing/bank_app_thing/ContentView_Transactions.swift"
+                  startingColumnNumber = "9223372036854775807"
+                  endingColumnNumber = "9223372036854775807"
+                  startingLineNumber = "24"
+                  endingLineNumber = "24">
+               </Location>
+            </Locations>
          </BreakpointContent>
       </BreakpointProxy>
       <BreakpointProxy
@@ -62,38 +120,6 @@
             endingLineNumber = "71"
             landmarkName = "ContentView_Transactions"
             landmarkType = "14">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            uuid = "D918EBB6-A1CC-4F7C-AD62-95FDCE8C650A"
-            shouldBeEnabled = "No"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "bank_app_thing/contentView_login.swift"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "171"
-            endingLineNumber = "171"
-            landmarkName = "body"
-            landmarkType = "24">
-         </BreakpointContent>
-      </BreakpointProxy>
-      <BreakpointProxy
-         BreakpointExtensionID = "Xcode.Breakpoint.FileBreakpoint">
-         <BreakpointContent
-            uuid = "D767DB2B-AD30-40DB-8182-59BFBFE42D79"
-            shouldBeEnabled = "Yes"
-            ignoreCount = "0"
-            continueAfterRunningActions = "No"
-            filePath = "bank_app_thing/contentView_login.swift"
-            startingColumnNumber = "9223372036854775807"
-            endingColumnNumber = "9223372036854775807"
-            startingLineNumber = "170"
-            endingLineNumber = "170"
-            landmarkName = "body"
-            landmarkType = "24">
          </BreakpointContent>
       </BreakpointProxy>
    </Breakpoints>

@@ -7,12 +7,24 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             VStack {
-                Spacer()
+                
                 ZStack {
-                    Spacer()
-                    Text("SettingsView")
+                    Text("Settings")
                         .font(.title)
+                        .padding(.top, 80)
                 }
+
+                NavigationLink(destination: UserDetailsView()) {
+                    Text("Edit User Details")
+                        .font(.headline)
+                        .frame(maxWidth: .infinity)
+                        .padding()
+                        .background(Color.blue.opacity(0.9))
+                        .foregroundColor(.white)
+                        .cornerRadius(12)
+                }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 20)
 
                 Button(role: .destructive) {
                     authManager.logout()

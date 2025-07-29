@@ -137,7 +137,44 @@ class Contentview_homepageModel: ObservableObject {
             print(self.errorMessage ?? "Unknown SwiftData error")
         }
     }
+    
+    class SwiftDataContainer {
+        static let shared = SwiftDataContainer()
+        let container: ModelContainer
+        
+        private init() {
+            do {
+                container = try ModelContainer(for: SwiftDataStore.self)
+            } catch {
+                fatalError("Failed to create ModelContainer: \(error)")
+            }
+        }
+    }
+        func submitUserEditToServer(details: UserDetails) {
+            guard let url = URL(string: "http://localhost:3031/ReviewUserEdit") else { return }
+            var request = URLRequest(url: url)
+            request.httpMethod = "POST"
+            request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            do {
+                let data = try JSONEncoder().encode(details)
+                request.httpBody = data
+                URLSession.shared.dataTask(with: request) { _, _, error in
+                    if let error = error {
+                        print("Failed to submit edit: \(error)")
+                    } else {
+                        print("Edit submitted for review.")
+                    }
+                }.resume()
+            } catch {
+                print("Encoding error: \(error)")
+            }
+        }
+    
+    
+    
 }
+
+
 
 struct ContentViewHomepage: View {
     @ObservedObject var auth: AuthManager
@@ -240,14 +277,26 @@ struct ContentViewHomepage: View {
                                 .frame(height: 180)
                                 .padding(.horizontal)
                                 .padding(.top, 6)
+                                .padding(.bottom, 10)
 
                                 // Button row for Overdraft/Recurring REMOVED
                                 // (the VStack with the two buttons and its .padding(.horizontal))
                             }
                         }
+                        //
+                        //
+                        //
+                        //
+                        //
+                        //
+                        //
                         // ---- Payees Carousel ----
+                        
+                        // connect to payess
+                        //
                         ScrollView(.horizontal, showsIndicators: false) {
                             HStack(spacing: 24) {
+
                                 ForEach(0..<3) { _ in
                                     Button(action: { }) {
                                         Image("default_payee")
@@ -264,6 +313,7 @@ struct ContentViewHomepage: View {
                                                     .fill(Color(.systemBackground))
                                                     .shadow(radius: 2)
                                             )
+
                                     }
                                 }
                                 Button(action: {}) {
@@ -281,7 +331,16 @@ struct ContentViewHomepage: View {
                             .padding(.horizontal)
                             .padding(.vertical)
                         }
-
+                        .padding(.top, 10)
+                        // ---- Payees Carousel ----
+                        //
+                        //
+                        //
+                        //
+                        //
+                        //
+                        //
+                        //
                         // ---- Transactions ----
                         Group {
                             if !viewModel.ledgerEntries.isEmpty {
@@ -439,23 +498,25 @@ struct SideMenuView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 24) {
+    
             Text("Menu")
                 .font(.title2)
                 .bold()
-                .padding(.top, 40)
+                .padding(.top, 80)
 
             Button(action: {
                 showOverdraftSheet = true
             }) {
-                HStack {
+                HStack(spacing: 12) {
                     Image(systemName: "creditcard")
                         .font(.headline)
                     Text("Manage Overdraft")
                         .font(.headline)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(maxWidth: .infinity, alignment: .center) // Center image+text
             }
             .frame(height: 54)
+            .frame(maxWidth: .infinity) // Button fills width
             .background(Color.blue)
             .foregroundColor(.white)
             .cornerRadius(12)
@@ -466,21 +527,21 @@ struct SideMenuView: View {
             Button(action: {
                 showRecurringSheet = true
             }) {
-                HStack {
+                HStack(spacing: 12) {
                     Image(systemName: "arrow.2.squarepath")
                         .font(.headline)
                     Text("Manage Recurring Payment")
                         .font(.headline)
                 }
-                .frame(maxWidth: .infinity, alignment: .leading)
+                .frame(maxWidth: .infinity, alignment: .center) // Center image+text
             }
             .frame(height: 54)
+            .frame(maxWidth: .infinity) // Button fills width
             .background(Color.blue)
             .foregroundColor(.white)
             .cornerRadius(12)
             .sheet(isPresented: $showRecurringSheet) {
-                // Replace with your recurring payment view if needed
-                OverdraftManagementView(isPresented: $showRecurringSheet)
+                DirectDebitsView(isPresented: $showRecurringSheet)
             }
 
             Spacer()
@@ -490,3 +551,4 @@ struct SideMenuView: View {
         .background(Color(.systemGroupedBackground))
     }
 }
+
