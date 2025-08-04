@@ -10,8 +10,9 @@ import Combine
 
 // MARK: - Model
 
-struct Payee: Identifiable, Codable {
-    var id: String { payeesPan }
+struct Payee: Identifiable, Decodable {
+    var id: Int { favorite }
+    let favorite: Int
     let payeeName: String
     let payeesPan: String
     let shortCode: String
@@ -93,7 +94,21 @@ struct Contentview_transfers: View {
                 .padding(.bottom, 10)
 
                 // Payees List
-                if !viewModel.payees.isEmpty {
+                if viewModel.payees.isEmpty {
+                    
+                    VStack {
+                        Spacer()
+                        Text("You don't have any payees yet,")
+                            .foregroundColor(.secondary)
+                        Text("create one by clicking the plus button.")
+                            .foregroundColor(.secondary)
+                            
+                        Spacer()
+    
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+                }else if !viewModel.payees.isEmpty {
+                    
                     List {
                         ForEach(viewModel.payees) { payee in
                             Button(action: {

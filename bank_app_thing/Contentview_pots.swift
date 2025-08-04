@@ -24,8 +24,6 @@ struct Pot: Identifiable, Codable {
     let RequestID: String
 }
 
-
-
 // MARK: - ViewModel
 
 class Contentview_potsModel: ObservableObject {
@@ -154,44 +152,54 @@ struct Contentview_pots: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            ZStack {
-                Text("pots")
-                    .font(.title)
-            
-                HStack {
-                    Spacer()
-                    Button(action: {
-                        showingCreatePotForm.toggle()
-                    }) {
-                        Image(systemName: "plus.circle.fill")
-                            .font(.largeTitle)
-                            .foregroundColor(.gray)
-                    }
-                    .padding()
+            // Top Bar
+            HStack {
+                Text("Pots")
+                    .font(.largeTitle.bold())
+                    .foregroundColor(.primary)
+                Spacer()
+                Button(action: {
+                    // Action for adding payee (to be implemented)
+                }) {
+                    Image(systemName: "plus.circle.fill")
+                        .font(.system(size: 32))
+                        .foregroundColor(.blue)
                 }
+                .accessibilityLabel("Add payee")
             }
+            .padding(.horizontal)
+            .padding(.top, 20)
+            .padding(.bottom, 10)
 
-            if !viewModel.pots.isEmpty {
-                List(viewModel.pots) { pot in
-                    VStack(alignment: .leading, spacing: 6) {
-                        Text("Pot Name: \(pot.name)")
-                            .font(.headline)
-                        HStack { Text("Balance: \(pot.Balance)")
-                                .font(.subheadline)
-                            Text("Interest Rate: \(pot.interestRate)")
+            // CONTENT (always below header)
+            Group {
+                Spacer()
+                if viewModel.errorMessage != nil {
+                    VStack {
+                        Text("You don't have any Pots yet,")
+                            .foregroundColor(.secondary)
+                        Text("create one by clicking the plus button.")
+                            .foregroundColor(.secondary)
+                    }
+                } else if !viewModel.pots.isEmpty {
+                    List(viewModel.pots) { pot in
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("Pot Name: \(pot.name)")
                                 .font(.headline)
+                            HStack {
+                                Text("Balance: \(pot.Balance)")
+                                    .font(.subheadline)
+                                Text("Interest Rate: \(pot.interestRate)")
+                                    .font(.headline)
+                            }
                         }
+                        .padding(.vertical, 4)
                     }
-                    .padding(.vertical, 4)
+                } else {
+                    Text("Loading...")
+                        .padding()
                 }
-            } else if let errorMessage = viewModel.errorMessage {
-                Text("Error: \(errorMessage)")
-                    .foregroundColor(.red)
-            } else {
-                Text("Loading...")
             }
-
-         
 
             if showingCreatePotForm {
                 VStack(spacing: 8) {
@@ -235,13 +243,14 @@ struct Contentview_pots: View {
                 }
                 .padding()
             }
+
+            Spacer()
         }
         .onAppear {
             viewModel.fetchPots(pan: pan)
         }
     }
 }
-
 
 struct Contentview_pots_Previews: PreviewProvider {
     static var previews: some View {
