@@ -30,6 +30,7 @@ struct ChatDetailView: View {
                 Text(error)
                     .foregroundColor(.red)
                     .padding()
+                
             } else if messages.isEmpty {
                 Text("No messages yet.")
                     .foregroundColor(.gray)

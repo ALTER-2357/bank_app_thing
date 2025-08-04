@@ -10,12 +10,12 @@ import Combine
 
 // MARK: - Model
 
-struct Payee: Identifiable, Codable {
-    var id: String { payeesPan }
+struct Payee: Identifiable, Decodable {
+    var id: Int { favorite }
+    let favorite: Int
     let payeeName: String
     let payeesPan: String
     let shortCode: String
-    let favorite: Int
 }
 
 // MARK: - ViewModel

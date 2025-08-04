@@ -206,7 +206,6 @@ class Contentview_homepageModel: ObservableObject {
     }
 }
 
-
 // MARK: - Main View
 
 struct ContentViewHomepage: View {
@@ -216,7 +215,6 @@ struct ContentViewHomepage: View {
     @State private var showMenu = false
     @State private var selectedPayee: Payee? = nil
     @State private var showReview: Bool = false
-
 
     let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
@@ -237,7 +235,10 @@ struct ContentViewHomepage: View {
                 if showMenu { hamburgerMenu }
                 if showSettings { settingsOverlay }
             }
-            .background(Color(.systemGroupedBackground).ignoresSafeArea())
+            .background(LinearGradient(
+                gradient: Gradient(colors: [Color(.systemGroupedBackground), Color(.systemGray6)]),
+                startPoint: .top, endPoint: .bottom
+            ).ignoresSafeArea())
             .onAppear(perform: fetchAll)
             .onReceive(timer) { _ in fetchAll() }
             .navigationBarBackButtonHidden(true)
@@ -247,66 +248,80 @@ struct ContentViewHomepage: View {
     }
 }
 
+
+
 // MARK: - Subviews and Sections
 
 extension ContentViewHomepage {
     // Top navigation bar
-    private var topBar: some View {
+     var topBar: some View {
         HStack {
             Button {
                 withAnimation { showMenu.toggle() }
             } label: {
                 Image(systemName: "line.3.horizontal")
-                    .foregroundColor(.gray)
-                    .font(.system(size: 25))
+                    .foregroundColor(.accentColor)
+                    .font(.system(size: 28, weight: .semibold))
+                    .padding(10)
+                    .background(Color(.systemGray5))
+                    .clipShape(Circle())
             }
-            .padding(.leading, 15)
+            .padding(.leading, 18)
 
             Spacer()
 
             Button {
                 withAnimation { showSettings = true }
             } label: {
-                Image(systemName: "gear")
-                    .foregroundColor(.gray)
-                    .font(.system(size: 25))
+                Image(systemName: "gearshape.fill")
+                    .foregroundColor(.accentColor)
+                    .font(.system(size: 24, weight: .medium))
+                    .padding(10)
+                    .background(Color(.systemGray5))
+                    .clipShape(Circle())
             }
-            .padding(.trailing, 15)
+            .padding(.trailing, 18)
         }
-        .padding(.vertical, 12)
+        .padding(.vertical, 10)
+        .padding(.bottom, 10)
+        .background(.ultraThinMaterial)
     }
 
     // Card Info Section
-    private func cardInfoSection(userDetails: UserDetails) -> some View {
+     func cardInfoSection(userDetails: UserDetails) -> some View {
         ZStack {
-            RoundedRectangle(cornerRadius: 24)
+            RoundedRectangle(cornerRadius: 22)
                 .fill(
                     LinearGradient(
                         gradient: Gradient(colors: [
-                            Color(red: 0, green: 1, blue: 0.698),
-                            Color(red: 0.0196, green: 0, blue: 1)
+                            Color.blue.opacity(0.85),
+                            Color.green.opacity(0.85)
                         ]),
-                        startPoint: UnitPoint(x: 1.0, y: 1.0),
-                        endPoint: UnitPoint(x: -0.2, y: -0.2)
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
                     )
                 )
-                .shadow(color: Color(.systemGray4), radius: 8)
+                .shadow(color: Color(.systemGray4), radius: 10)
             VStack(alignment: .leading, spacing: 14) {
                 if let cards = viewModel.cards {
-                    Text("Card Number")
-                        .font(.caption)
-                        .foregroundColor(.white.opacity(0.85))
-                    Text(cards.CardNumber)
-                        .font(.title3).bold()
-                        .foregroundColor(.white)
+                    HStack {
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text("Card Number")
+                                .font(.caption)
+                                .foregroundColor(.white.opacity(0.85))
+                            Text(cards.CardNumber)
+                                .font(.title2).bold().foregroundColor(.white)
+                        }
+                    }
                     Text("CVV: \(cards.CVV)   Expiry: \(cards.ExpiryDate)")
-                        .font(.subheadline)
-                        .foregroundColor(.white.opacity(0.85))
+                        .font(.body)
+                        .foregroundColor(.white.opacity(0.9))
                 } else {
                     Text("Loading card info…")
                         .font(.subheadline)
                         .foregroundColor(.white.opacity(0.7))
                 }
+                Divider().background(.white.opacity(0.7))
                 HStack {
                     Text("Balance")
                         .font(.caption)
@@ -320,154 +335,180 @@ extension ContentViewHomepage {
                         .background(
                             Capsule()
                                 .fill(userDetails.balance.contains("-") ? Color.red : Color.green)
+                                .shadow(radius: 3)
                         )
                 }
             }
-            .padding(28)
+            .padding(26)
         }
         .frame(maxWidth: .infinity)
-        .frame(height: 180)
+        .frame(height: 175)
         .padding(.horizontal)
-        .padding(.top, 6)
-        .padding(.bottom, 10)
+        .padding(.top, 8)
+        .padding(.bottom, 12)
     }
 
-    // Payee Card Carousel
-
-
-    private var payeeCardCarousel: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 16) {
-                ForEach(viewModel.payees) { payee in
-                    Button(action: {
-                        selectedPayee = payee
-                        showReview = true
-                    }) {
-                        HStack(alignment: .center, spacing: 12) {
-                            VStack {
-                                Circle()
-                                    .frame(width: 64, height: 64)
-                                    .overlay(
-                                        Image("default_payee")
-                                            .resizable()
-                                            .aspectRatio(contentMode: .fill)
-                                            .clipShape(Circle())
-                                            .overlay(
-                                                Circle()
-                                                    .stroke(Color.black, lineWidth: 1)
-                                            )
-                                            .background(
-                                                Circle()
-                                                    .fill(Color(.systemBackground))
-                                                    .shadow(radius: 2)
-                                            )
-                                    )
+    // Payee Card Carousel - IMPROVED UI/UX
+     var payeeCardCarousel: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Favorite Payees")
+                .font(.headline)
+                .padding(.leading, 24)
+                .padding(.top, 10)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 20) {
+                    ForEach(viewModel.payees) { payee in
+                        Button(action: {
+                            selectedPayee = payee
+                            showReview = true
+                        }) {
+                            VStack(spacing: 8) {
+                                ZStack {
+                                    Circle()
+                                        .fill(Color.blue.opacity(0.15))
+                                        .frame(width: 68, height: 68)
+                                    Image("default_payee")
+                                        .resizable()
+                                        .aspectRatio(contentMode: .fill)
+                                        .frame(width: 54, height: 54)
+                                        .clipShape(Circle())
+                                        .overlay(
+                                            Circle()
+                                                .stroke(Color.blue, lineWidth: 1)
+                                        )
+                                        .shadow(radius: 2)
+                                }
                                 Text(payee.payeeName)
+                                    .font(.subheadline.weight(.medium))
                                     .foregroundColor(.primary)
+                                    .lineLimit(1)
+                                    .frame(width: 70)
                             }
+                            .padding(.vertical, 8)
+                            .padding(.horizontal, 2)
+                            .background(
+                                RoundedRectangle(cornerRadius: 15)
+                                    .fill(Color(.systemBackground))
+                                    .shadow(radius: 1, y: 1)
+                                    .opacity(0.50)
+                            )
                         }
-                        .padding(.vertical, 10)
-                        .padding(8)
+                        .buttonStyle(PlainButtonStyle())
                     }
-                    .buttonStyle(PlainButtonStyle())
-                    .shadow(radius: 2)
                 }
+                .padding(.horizontal, 16)
+                .padding(.bottom, 6)
             }
-            .padding(.horizontal, 16)
         }
-        // Attach the .sheet to the ScrollView or the outermost container in your view
         .sheet(isPresented: $showReview) {
             if let payee = selectedPayee {
-                PayeeReviewView(payee: payee)
+                TransferReviewView(payee: payee, isPresented: $showReview)
             }
         }
     }
 
+    
+    
     // Transactions Section
-    private var transactionsSection: some View {
+     var transactionsSection: some View {
         Group {
             if !viewModel.ledgerEntries.isEmpty {
-                ScrollView {
+                VStack(alignment: .leading, spacing: 0) {
                     Text("Recent Transactions")
                         .font(.headline)
-                        .padding(.leading)
-                    VStack(spacing: 10) {
-                        let maxToShow = 10
-                        let entriesToShow = Array(viewModel.ledgerEntries.prefix(maxToShow))
-                        ForEach(entriesToShow.indices, id: \.self) { index in
-                            let entry = entriesToShow[index]
-                            NavigationLink(destination: ContentView_Detailed_Transaction(entry: entry)) {
-                                HStack(spacing: 16) {
-                                    VStack(alignment: .leading, spacing: 2) {
-                                        Text(entry.MerchantName)
-                                            .font(.headline)
-                                            .foregroundColor(.primary)
-                                        Text(entry.Date)
-                                            .font(.caption)
-                                            .foregroundColor(.secondary)
-                                        if !entry.Description.isEmpty {
-                                            Text(entry.Description)
-                                                .font(.caption2)
+                        .padding(.leading, 24)
+                        .padding(.top, 10)
+                        .padding(.bottom, 10)
+                    ScrollView {
+                        VStack(spacing: 10) {
+                            let maxToShow = 10
+                            let entriesToShow = Array(viewModel.ledgerEntries.prefix(maxToShow))
+                            ForEach(entriesToShow.indices, id: \.self) { index in
+                                let entry = entriesToShow[index]
+                                NavigationLink(destination: ContentView_Detailed_Transaction(entry: entry)) {
+                                    HStack(spacing: 16) {
+                                        VStack(alignment: .leading, spacing: 2) {
+                                            Text(entry.MerchantName)
+                                                .font(.headline)
+                                                .foregroundColor(.primary)
+                                            Text(entry.Date)
+                                                .font(.caption)
                                                 .foregroundColor(.secondary)
+                                            if !entry.Description.isEmpty {
+                                                Text(entry.Description)
+                                                    .font(.caption2)
+                                                    .foregroundColor(.secondary)
+                                            }
                                         }
+                                        Spacer()
+                                        Text("£\(entry.Amount)")
+                                            .font(.headline.weight(.bold))
+                                            .foregroundColor(entry.Amount.contains("-") ? .red : .green)
+                                            .padding(.horizontal, 12)
+                                            .padding(.vertical, 6)
+                                            .background(
+                                                Capsule()
+                                                    .fill(entry.Amount.contains("-") ? Color.red.opacity(0.15) : Color.green.opacity(0.15))
+                                            )
                                     }
-                                    Spacer()
-                                    Text("£\(entry.Amount)")
-                                        .font(.headline.weight(.bold))
-                                        .foregroundColor(entry.Amount.contains("-") ? .red : .green)
-                                        .padding(.horizontal, 12)
-                                        .padding(.vertical, 6)
+                                    .padding(.vertical, 8)
+                                    .padding(.horizontal)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 14)
+                                            .fill(Color(.systemBackground))
+                                            .shadow(color: Color(.systemGray3).opacity(0.12), radius: 5, x: 0, y: 2)
+                                    )
+                                }
+                                .buttonStyle(PlainButtonStyle())
+                            }
+                            if viewModel.ledgerEntries.count > maxToShow {
+                                NavigationLink(destination: ContentView_Transactions()) {
+                                    Text("See more")
+                                        .font(.callout.weight(.medium))
+                                        .frame(maxWidth: .infinity)
+                                        .padding(.vertical, 10)
                                         .background(
-                                            Capsule()
-                                                .fill(entry.Amount.contains("-") ? Color.red.opacity(0.15) : Color.green.opacity(0.15))
+                                            RoundedRectangle(cornerRadius: 12)
+                                                .fill(Color.blue.opacity(0.15))
                                         )
                                 }
-                                .padding(.vertical, 8)
                                 .padding(.horizontal)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 14)
-                                        .fill(Color(.systemBackground))
-                                        .shadow(color: Color(.systemGray3).opacity(0.15), radius: 4, x: 0, y: 2)
-                                )
                             }
-                        }
-                        if viewModel.ledgerEntries.count > maxToShow {
-                            NavigationLink(destination: ContentView_Transactions()) {
-                                Text("See more")
-                                    .frame(maxWidth: .infinity)
-                                    .padding(.vertical, 10)
-                                    .background(
-                                        RoundedRectangle(cornerRadius: 12)
-                                            .fill(Color.blue.opacity(0.15))
-                                    )
-                            }
-                            .padding(.horizontal)
                         }
                     }
                 }
+                .cornerRadius(18)
+                .padding(.horizontal, 12)
+                .padding(.bottom, 8)
             } else if let errorMessage = viewModel.errorMessage {
                 Text("Error: \(errorMessage)")
                     .foregroundColor(.red)
                     .padding(.leading)
             } else {
-                Text("Loading…")
-                    .foregroundColor(.gray)
-                    .padding(.leading)
-                    .onAppear(perform: fetchAll)
+                HStack {
+                    ProgressView()
+                    Text("Loading…")
+                        .foregroundColor(.gray)
+                        .padding(.leading)
+                }
+                .padding(.leading)
+                .onAppear(perform: fetchAll)
             }
         }
     }
 
     // Hamburger Menu Drawer with overlay
-    private var hamburgerMenu: some View {
+     var hamburgerMenu: some View {
         ZStack {
             Color.black.opacity(0.3)
                 .ignoresSafeArea()
                 .onTapGesture { withAnimation { showMenu = false } }
             HStack {
                 SideMenuView()
-                    .frame(width: 260)
-                    .background(Color(.systemBackground).shadow(radius: 8))
+                    .frame(width: 270)
+                    .background(.ultraThinMaterial)
+                    .cornerRadius(20)
+                    .shadow(radius: 12, x: 2)
                     .transition(.move(edge: .leading))
                 Spacer()
             }
@@ -475,23 +516,7 @@ extension ContentViewHomepage {
         }
     }
 
-    // Settings Overlay
-    private var settingsOverlay: some View {
-        ZStack {
-            Color.black.opacity(0.3)
-                .ignoresSafeArea()
-                .onTapGesture { withAnimation { showSettings = false } }
-            HStack {
-                Spacer()
-                SettingsView(authManager: auth)
-                    .frame(width: 320)
-                    .background(Color(.systemBackground).shadow(radius: 8))
-                    .transition(.move(edge: .trailing))
-            }
-            .ignoresSafeArea()
-        }
-    }
-
+    
     // Helper to fetch all on appear/timer
     func fetchAll() {
         if let pan = auth.pan, !pan.isEmpty {
@@ -499,6 +524,26 @@ extension ContentViewHomepage {
             viewModel.fetchUserDataStore(pan: pan)
             viewModel.fetchCards(pan: pan)
             viewModel.fetchPayees(pan: pan)
+        }
+    }
+    
+    
+    // Settings Overlay           SideMenuView()
+     var settingsOverlay: some View {
+        ZStack {
+            Color.black.opacity(0.3)
+                .ignoresSafeArea()
+                .onTapGesture { withAnimation { showSettings = false } }
+            HStack {
+                Spacer()
+                SettingsView(authManager: auth)
+                    .frame(width: 330)
+                    .background(.ultraThinMaterial)
+                    .cornerRadius(20)
+                    .shadow(radius: 12, x: -2)
+                    .transition(.move(edge: .trailing))
+            }
+            .ignoresSafeArea()
         }
     }
 }
@@ -550,7 +595,7 @@ struct SideMenuView: View {
             .foregroundColor(.white)
             .cornerRadius(12)
             .sheet(isPresented: $showRecurringSheet) {
-                OverdraftManagementView(isPresented: $showRecurringSheet)
+                DirectDebitsView(isPresented: $showRecurringSheet)
             }
 
             Spacer()
@@ -560,5 +605,3 @@ struct SideMenuView: View {
         .background(Color(.systemGroupedBackground))
     }
 }
-
-
